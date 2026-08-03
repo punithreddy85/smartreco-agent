@@ -11,7 +11,10 @@ from typing import NoReturn
 import uvicorn
 
 from smartreco_agent.src.api import app
-from smartreco_agent.src.core.exceptions.exceptions import AppException, AppExceptionCode
+from smartreco_agent.src.core.exceptions.exceptions import (
+    AppException,
+    AppExceptionCode,
+)
 from smartreco_agent.src.settings import settings
 from smartreco_agent.src.settings import validate_config as validate_config_func
 from smartreco_agent.utils.google_creds import initialize_google_genai

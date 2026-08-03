@@ -11,7 +11,10 @@ from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-from smartreco_agent.src.core.exceptions.exceptions import AppException, AppExceptionCode
+from smartreco_agent.src.core.exceptions.exceptions import (
+    AppException,
+    AppExceptionCode,
+)
 from smartreco_agent.utils.pylogger import get_python_logger
 
 # Initialize logger

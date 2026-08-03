@@ -16,7 +16,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from smartreco_agent.src.core.agent import initialize_database
-from smartreco_agent.src.core.exceptions.exceptions import AppException, AppExceptionCode
+from smartreco_agent.src.core.exceptions.exceptions import (
+    AppException,
+    AppExceptionCode,
+)
 from smartreco_agent.src.routes.feedback import router as feedback_router
 from smartreco_agent.src.routes.health import router as health_router
 from smartreco_agent.src.routes.history import router as history_router
