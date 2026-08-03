@@ -156,6 +156,13 @@ async def complete_json(
     return parsed, usage
 
 
+# Qwen's embedding provider (fronted by Mesh) returns a hard 500 on any batch
+# over 10 inputs - confirmed empirically (11 items fails, 10 succeeds). Chunking
+# here keeps every caller (product embedding, query embedding) oblivious to the
+# provider's limit instead of each one re-discovering it.
+MESH_EMBED_BATCH_LIMIT = 10
+
+
 async def embed(
     texts: Sequence[str], *, input_type: Literal["document", "query"]
 ) -> list[list[float]]:
@@ -163,27 +170,32 @@ async def embed(
 
     `dimensions` is passed explicitly on every call - Qwen v4's default width is
     not 1536, and omitting it would silently break the `vector(1536)` column the
-    moment a provider default changed (Appendix D.4).
+    moment a provider default changed (Appendix D.4). Requests are chunked to
+    `MESH_EMBED_BATCH_LIMIT` items since the provider rejects larger batches.
     """
     if not texts:
         return []
     client = get_mesh_client()
-    CALL_COUNTS["embeddings"] += 1
-    try:
-        resp = await client.embeddings.create(
-            model=settings.MESH_EMBED_MODEL,
-            input=list(texts),
-            dimensions=settings.MESH_EMBED_DIMENSIONS,
-            extra_body={"input_type": input_type},
-        )
-    except APIStatusError as e:
-        if e.status_code == 402:
-            raise BalanceExhausted("Mesh balance/spend-limit exhausted") from e
-        raise MeshError(
-            f"Mesh embeddings call failed: {e.status_code} {e.message}"
-        ) from e
+    vectors: list[list[float]] = []
+    for start in range(0, len(texts), MESH_EMBED_BATCH_LIMIT):
+        chunk = list(texts[start : start + MESH_EMBED_BATCH_LIMIT])
+        CALL_COUNTS["embeddings"] += 1
+        try:
+            resp = await client.embeddings.create(
+                model=settings.MESH_EMBED_MODEL,
+                input=chunk,
+                dimensions=settings.MESH_EMBED_DIMENSIONS,
+                extra_body={"input_type": input_type},
+            )
+        except APIStatusError as e:
+            if e.status_code == 402:
+                raise BalanceExhausted("Mesh balance/spend-limit exhausted") from e
+            raise MeshError(
+                f"Mesh embeddings call failed: {e.status_code} {e.message}"
+            ) from e
+        vectors.extend(d.embedding for d in resp.data)
 
-    return [d.embedding for d in resp.data]
+    return vectors
 
 
 _query_embed_cache: dict[str, list[float]] = {}
