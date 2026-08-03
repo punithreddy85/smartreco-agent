@@ -63,3 +63,32 @@ class EventBatch(BaseModel):
 
 class IngestResponse(BaseModel):
     accepted: int
+
+
+class SignalFeedItem(BaseModel):
+    """One entry in the live "Your Signal" panel (GET /api/live-signal)."""
+
+    label: str
+    detail: str
+    is_latest: bool
+
+
+class SignalRecommendationItem(BaseModel):
+    product_id: str
+    title: str
+    category: str
+    price_cents: int
+    reason: str
+
+
+class SignalRecommendation(BaseModel):
+    narrative: str
+    items: list[SignalRecommendationItem]
+
+
+class LiveSignalResponse(BaseModel):
+    """Response body for GET /api/live-signal - a pure read of already-computed
+    state, never triggers agent generation (ARCHITECTURE.md \u00a76.1, \u00a715)."""
+
+    feed: list[SignalFeedItem]
+    recommendation: Optional[SignalRecommendation] = None

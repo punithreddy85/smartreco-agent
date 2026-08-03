@@ -14,7 +14,7 @@
     </section>
 
     <div class="card-grid">
-      {% for item in rec.items %}
+      {% for item in rec['items'] %}
         <a class="card product-card" href="/products/{{ item.product_id }}">
           <div class="card-badge">{{ item.level }}</div>
           <h3>{{ item.title }}</h3>

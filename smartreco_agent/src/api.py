@@ -26,6 +26,7 @@ from smartreco_agent.src.routes.auth import router as auth_router
 from smartreco_agent.src.routes.cron import router as cron_router
 from smartreco_agent.src.routes.events import router as events_router
 from smartreco_agent.src.routes.health import router as health_router
+from smartreco_agent.src.routes.signal import router as signal_router
 from smartreco_agent.src.routes.web import router as web_router
 from smartreco_agent.src.settings import settings
 from smartreco_agent.src.web.templating import STATIC_DIR
@@ -96,6 +97,7 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(web_router)
 app.include_router(events_router)
+app.include_router(signal_router)
 app.include_router(admin_router)
 app.include_router(cron_router)
 

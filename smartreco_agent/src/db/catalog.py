@@ -393,6 +393,24 @@ async def mark_digest_failed(user_id: str, conn=None) -> None:
 # --------------------------------------------------------------------------- #
 
 
+def _normalize_vector_columns(
+    row: Optional[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
+    """`interest_vector`/`gen_vector` are pgvector columns; `register_vector_async`
+    (db/pool.py) makes psycopg return them as numpy arrays, not lists. Every
+    consumer of a profile row does plain Python truthiness (`if x`, `x or y`) on
+    these fields, which raises `ValueError: truth value of an array...` on any
+    array with more than one element. Normalizing once here, at the DB boundary,
+    keeps every downstream call site free to use ordinary Python semantics."""
+    if row is None:
+        return None
+    for key in ("interest_vector", "gen_vector"):
+        value = row.get(key)
+        if value is not None and not isinstance(value, list):
+            row[key] = value.tolist()
+    return row
+
+
 async def get_profile(user_id: UUID | str, conn=None) -> Optional[dict[str, Any]]:
     async with AsyncExitStack() as stack:
         c = await _conn_or_borrow(stack, conn)
@@ -401,7 +419,7 @@ async def get_profile(user_id: UUID | str, conn=None) -> Optional[dict[str, Any]
                 "select * from catalog.user_profiles where user_id = %s",
                 (str(user_id),),
             )
-            return await cur.fetchone()
+            return _normalize_vector_columns(await cur.fetchone())
 
 
 async def upsert_profile(
@@ -437,7 +455,10 @@ async def upsert_profile(
                     events_since_gen_delta,
                 ),
             )
-            return await cur.fetchone()
+            row = await cur.fetchone()
+            assert row is not None, "insert ... returning * always yields one row"
+            _normalize_vector_columns(row)
+            return row
 
 
 async def mark_generated(

@@ -74,7 +74,7 @@ def _build_trace(
                 _event(
                     "dwell",
                     p["id"],
-                    payload={"duration_seconds": random.randint(45, 180)},
+                    payload={"seconds": random.randint(45, 180)},
                     when=tick(60),
                 )
             )

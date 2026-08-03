@@ -2,16 +2,33 @@
 {% block title %}{{ product.title }} — SmartReco{% endblock %}
 {% block content %}
   <a href="/catalog" class="back-link">← Back to catalog</a>
-  <article class="product-detail" data-product-id="{{ product.id }}">
-    <div class="card-badge">{{ product.level }}</div>
-    <h1>{{ product.title }}</h1>
-    <p class="muted">{{ product.category }} &middot; {{ product.tags | join(', ') }}</p>
-    <p class="price large">${{ "%.2f"|format(product.price_cents / 100) }}</p>
-    <p class="description">{{ product.description }}</p>
-    <button id="add-to-cart" class="primary" {% if already_added %}disabled{% endif %}>
-      {% if already_added %}Added ✓{% else %}Add to cart{% endif %}
-    </button>
-  </article>
+
+  <div class="product-layout">
+    <article class="product-detail" data-product-id="{{ product.id }}">
+      <div class="card-badge">{{ product.level }}</div>
+      <h1>{{ product.title }}</h1>
+      <p class="muted">{{ product.category }} &middot; {{ product.tags | join(', ') }}</p>
+      <p class="price large">${{ "%.2f"|format(product.price_cents / 100) }}</p>
+      <p class="description">{{ product.description }}</p>
+      <button id="add-to-cart" class="primary" {% if already_added %}disabled{% endif %}>
+        {% if already_added %}Added ✓{% else %}Add to cart{% endif %}
+      </button>
+    </article>
+
+    <aside class="live-signal-panel">
+      <div class="signal-header">
+        <span class="streaming-dot" aria-hidden="true"></span>
+        <div>
+          <strong>Your Signal</strong>
+          <p class="muted small">live &middot; observed by agent</p>
+        </div>
+      </div>
+      <div id="signal-feed" class="signal-feed">
+        <p class="muted small">Loading your recent activity…</p>
+      </div>
+      <div id="signal-recommendation" class="agent-rec-card"></div>
+    </aside>
+  </div>
 
   <script>
     (function () {
@@ -27,4 +44,5 @@
       });
     })();
   </script>
+  <script src="/static/live-signal.js"></script>
 {% endblock %}

@@ -21,6 +21,17 @@ from smartreco_agent.src.tracking import gate
 USER_ID = "11111111-1111-1111-1111-111111111111"
 
 
+@pytest.fixture(autouse=True)
+def _production_trigger_policy(monkeypatch):
+    """`gate.COOLDOWN`/`COUNT_THRESHOLD`/`DRIFT_THRESHOLD` are read from settings
+    (env-configurable so local/demo runs can shorten the cooldown), but these
+    tests assert against the documented production policy (ARCHITECTURE.md §8)
+    and must stay correct regardless of whatever a developer's local .env says."""
+    monkeypatch.setattr(gate, "COOLDOWN", timedelta(minutes=10))
+    monkeypatch.setattr(gate, "COUNT_THRESHOLD", 8)
+    monkeypatch.setattr(gate, "DRIFT_THRESHOLD", 0.15)
+
+
 def _unit_vector(seed: int, dim: int = 8) -> list[float]:
     rng = np.random.default_rng(seed)
     v = rng.normal(size=dim)

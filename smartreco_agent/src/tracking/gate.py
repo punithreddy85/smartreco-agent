@@ -16,10 +16,11 @@ from typing import Optional
 import numpy as np
 
 from smartreco_agent.src.db import catalog
+from smartreco_agent.src.settings import settings
 
-COOLDOWN = timedelta(minutes=10)
-COUNT_THRESHOLD = 8
-DRIFT_THRESHOLD = 0.15  # cosine *distance* (1 - similarity)
+COOLDOWN = timedelta(seconds=settings.TRIGGER_COOLDOWN_SECONDS)
+COUNT_THRESHOLD = settings.TRIGGER_COUNT_THRESHOLD
+DRIFT_THRESHOLD = settings.TRIGGER_DRIFT_THRESHOLD  # cosine *distance* (1 - similarity)
 
 
 def _top_category(weights: dict[str, float]) -> Optional[str]:

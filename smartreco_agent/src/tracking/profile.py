@@ -51,7 +51,8 @@ def _decay_all(weights: dict[str, float], hours_elapsed: float) -> dict[str, flo
 def _event_weight(event: dict[str, Any]) -> float:
     base = EVENT_WEIGHT.get(event["type"], 0.0)
     if event["type"] == "dwell":
-        seconds = (event.get("payload") or {}).get("duration_seconds", 0)
+        # tracker.js's flushDwell() sends {"seconds": ...} (see static/tracker.js).
+        seconds = (event.get("payload") or {}).get("seconds", 0)
         return base if seconds >= DWELL_MIN_SECONDS else 0.0
     return base
 

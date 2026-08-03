@@ -92,10 +92,10 @@ class PgVectorStore:
                 await cur.execute(
                     f"""
                     select product_id, category, level, price_cents,
-                           1 - (embedding <=> %s) as similarity
+                           1 - (embedding <=> %s::vector) as similarity
                       from vectors.product_embeddings
                       {clause}
-                     order by embedding <=> %s
+                     order by embedding <=> %s::vector
                      limit %s
                     """,
                     [query, *params, query, k],

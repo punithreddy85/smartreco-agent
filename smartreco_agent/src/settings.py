@@ -104,6 +104,21 @@ class Settings(BaseSettings):
     # --- Request logging ---
     REQUEST_LOGGING_ENABLED: bool = Field(default=True)
 
+    # --- Trigger policy (ARCHITECTURE.md §8) ---
+    TRIGGER_COOLDOWN_SECONDS: int = Field(
+        default=600,
+        json_schema_extra={"env": "TRIGGER_COOLDOWN_SECONDS"},
+        description="Absolute minimum gap between agent runs for a user, even for "
+        "an explicit manual refresh. Production default is 600s (10 min); lower "
+        "this in local/demo .env files for faster feedback loops.",
+    )
+    TRIGGER_COUNT_THRESHOLD: int = Field(
+        default=8, json_schema_extra={"env": "TRIGGER_COUNT_THRESHOLD"}
+    )
+    TRIGGER_DRIFT_THRESHOLD: float = Field(
+        default=0.15, json_schema_extra={"env": "TRIGGER_DRIFT_THRESHOLD"}
+    )
+
     @property
     def use_transaction_pooler(self) -> bool:
         """Whether the configured DATABASE_URL looks like a pooled connection."""

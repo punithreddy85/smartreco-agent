@@ -285,3 +285,111 @@ button.secondary, a.secondary.button-link {
 }
 .stat-value { display: block; font-size: 1.5rem; font-weight: 700; color: var(--accent-2); }
 .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+/* --- Live signal panel (product page) --- */
+.product-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .product-layout { grid-template-columns: 1fr; }
+}
+
+.live-signal-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  position: sticky;
+  top: 5.5rem;
+}
+
+.signal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.signal-header strong { display: block; }
+.signal-header p { margin: 0.15rem 0 0; }
+
+.streaming-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--success);
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 rgba(52, 211, 153, 0.6);
+  animation: signal-pulse 2s infinite;
+}
+@keyframes signal-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+.signal-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.signal-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.signal-chip strong { color: var(--text); font-weight: 600; }
+.signal-chip.latest {
+  border-color: var(--accent);
+  background: rgba(124, 92, 255, 0.15);
+  color: var(--text);
+}
+
+.agent-rec-card {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.agent-rec-heading {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-2);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.agent-rec-narrative {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+
+.agent-rec-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.agent-rec-mini-card {
+  display: block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem;
+  color: var(--text);
+  transition: border-color 0.15s ease;
+}
+.agent-rec-mini-card:hover { border-color: var(--accent); text-decoration: none; }
+.agent-rec-mini-card .title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
+.agent-rec-mini-card .price { margin-top: 0.35rem; font-size: 0.85rem; }

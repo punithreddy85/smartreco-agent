@@ -54,8 +54,9 @@ def test_decay_never_produces_negative_or_growing_weights():
 
 
 def test_dwell_below_threshold_contributes_zero_weight():
-    short_dwell = {"type": "dwell", "payload": {"duration_seconds": 10}}
-    long_dwell = {"type": "dwell", "payload": {"duration_seconds": 45}}
+    # Matches the real payload shape sent by static/tracker.js's flushDwell().
+    short_dwell = {"type": "dwell", "payload": {"seconds": 10}}
+    long_dwell = {"type": "dwell", "payload": {"seconds": 45}}
 
     assert profile._event_weight(short_dwell) == 0.0
     assert profile._event_weight(long_dwell) == profile.EVENT_WEIGHT["dwell"]
