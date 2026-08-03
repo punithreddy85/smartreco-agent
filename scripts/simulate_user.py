@@ -36,7 +36,9 @@ from smartreco_agent.src.tracking import gate, profile  # noqa: E402
 DEMO_EMAIL = "demo@smartreco.dev"
 
 
-def _event(type_: str, product_id: str | None = None, payload: dict | None = None, when=None) -> dict:
+def _event(
+    type_: str, product_id: str | None = None, payload: dict | None = None, when=None
+) -> dict:
     return {
         "event_id": str(uuid.uuid4()),
         "type": type_,
@@ -46,7 +48,9 @@ def _event(type_: str, product_id: str | None = None, payload: dict | None = Non
     }
 
 
-def _build_trace(products: list[dict], queries: list[str], noise_products: list[dict]) -> list[dict]:
+def _build_trace(
+    products: list[dict], queries: list[str], noise_products: list[dict]
+) -> list[dict]:
     """~35 events skewed toward `products`, with a couple of searches and a
     handful of unrelated `noise_products` so the skew is realistic, not exclusive."""
     now = datetime.now(timezone.utc)
@@ -66,7 +70,14 @@ def _build_trace(products: list[dict], queries: list[str], noise_products: list[
         if random.random() < 0.6:
             events.append(_event("click", p["id"], when=tick(3)))
         if p["level"] == "advanced" and random.random() < 0.7:
-            events.append(_event("dwell", p["id"], payload={"duration_seconds": random.randint(45, 180)}, when=tick(60)))
+            events.append(
+                _event(
+                    "dwell",
+                    p["id"],
+                    payload={"duration_seconds": random.randint(45, 180)},
+                    when=tick(60),
+                )
+            )
 
     for p in noise_products:
         events.append(_event("product_view", p["id"], when=tick()))
@@ -77,7 +88,9 @@ def _build_trace(products: list[dict], queries: list[str], noise_products: list[
 async def _ensure_demo_user() -> str:
     user = await catalog.get_user_by_email(DEMO_EMAIL)
     if not user:
-        raise SystemExit(f"Demo user not found - run `make seed` first (expects {DEMO_EMAIL}).")
+        raise SystemExit(
+            f"Demo user not found - run `make seed` first (expects {DEMO_EMAIL})."
+        )
     return str(user["id"])
 
 
@@ -99,7 +112,9 @@ async def _run_phase(user_id: str, label: str, events: list[dict]) -> None:
     await profile.apply(user_id, events)
     reason = await gate.should_generate(user_id)
     if not reason:
-        print("gate: no trigger fired (cooldown, or interests have not moved enough yet)")
+        print(
+            "gate: no trigger fired (cooldown, or interests have not moved enough yet)"
+        )
         return
     print(f"gate fired: trigger_reason={reason!r} -- calling the agent")
     rec = await run_agent(user_id, trigger_reason=reason)
@@ -111,7 +126,9 @@ async def _run_phase(user_id: str, label: str, events: list[dict]) -> None:
     print(rec["narrative"])
     print()
     for item in rec["items"]:
-        print(f"  - {item['title']} [{item['category']}/{item['level']}] - {item['reason']}")
+        print(
+            f"  - {item['title']} [{item['category']}/{item['level']}] - {item['reason']}"
+        )
 
 
 async def main() -> None:
@@ -125,7 +142,9 @@ async def main() -> None:
             raise SystemExit("Catalog looks empty - run `make seed` first.")
 
         print("=" * 70)
-        print("Phase 1: user keeps landing on agentic-AI content, searches for it twice")
+        print(
+            "Phase 1: user keeps landing on agentic-AI content, searches for it twice"
+        )
         print("=" * 70)
         phase_1_events = _build_trace(
             products=agentic,

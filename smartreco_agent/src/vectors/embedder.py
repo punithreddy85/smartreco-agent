@@ -22,8 +22,11 @@ async def embed_products(products: Sequence[dict]) -> list[EmbeddedProduct]:
 
     texts = [
         embeddable_text(
-            title=p["title"], description=p["description"],
-            category=p["category"], level=p["level"], tags=p["tags"],
+            title=p["title"],
+            description=p["description"],
+            category=p["category"],
+            level=p["level"],
+            tags=p["tags"],
         )
         for p in products
     ]
@@ -34,8 +37,11 @@ async def embed_products(products: Sequence[dict]) -> list[EmbeddedProduct]:
             product_id=str(p["id"]),
             embedding=vector,
             content_hash=content_hash(
-                title=p["title"], description=p["description"],
-                category=p["category"], level=p["level"], tags=p["tags"],
+                title=p["title"],
+                description=p["description"],
+                category=p["category"],
+                level=p["level"],
+                tags=p["tags"],
             ),
             model=settings.MESH_EMBED_MODEL,
             category=p["category"],

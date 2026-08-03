@@ -14,7 +14,14 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 
 EventType = Literal[
-    "page_view", "product_view", "search", "click", "dwell", "add_to_cart", "dismiss", "scroll"
+    "page_view",
+    "product_view",
+    "search",
+    "click",
+    "dwell",
+    "add_to_cart",
+    "dismiss",
+    "scroll",
 ]
 
 

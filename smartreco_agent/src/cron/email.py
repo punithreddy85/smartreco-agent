@@ -32,7 +32,9 @@ def _render_html(email: str, narrative: str, items: list[dict]) -> str:
     """
 
 
-async def send_digest_email(*, to_email: str, narrative: str, items: list[dict]) -> bool:
+async def send_digest_email(
+    *, to_email: str, narrative: str, items: list[dict]
+) -> bool:
     if not settings.RESEND_API_KEY:
         logger.warning("resend_not_configured_skipping_email", to_email=to_email)
         return False

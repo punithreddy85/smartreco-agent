@@ -75,7 +75,9 @@ async def mark_done(outbox_id: int, conn=None) -> None:
             )
 
 
-async def mark_failed(outbox_id: int, error: str, *, max_attempts: int = 5, conn=None) -> None:
+async def mark_failed(
+    outbox_id: int, error: str, *, max_attempts: int = 5, conn=None
+) -> None:
     async with AsyncExitStack() as stack:
         c = await _conn_or_borrow(stack, conn)
         async with c.cursor() as cur:

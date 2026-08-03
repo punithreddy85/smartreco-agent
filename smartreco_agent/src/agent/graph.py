@@ -46,7 +46,9 @@ def build_graph():
     graph.add_edge("load_signals", "analyze_intent")
     graph.add_edge("analyze_intent", "retrieve")
     graph.add_edge("retrieve", "grade")
-    graph.add_conditional_edges("grade", route_after_grade, {"refine": "refine", "rerank": "rerank"})
+    graph.add_conditional_edges(
+        "grade", route_after_grade, {"refine": "refine", "rerank": "rerank"}
+    )
     graph.add_edge("refine", "retrieve")
     graph.add_edge("rerank", "generate_and_verify")
     graph.add_edge("generate_and_verify", "persist")
@@ -78,7 +80,9 @@ async def run_agent(user_id: str, trigger_reason: str) -> dict | None:
         and current_rec["profile_hash"] == profile.get("profile_hash")
     ):
         await catalog.insert_agent_run(
-            user_id=user_id, trigger_reason=trigger_reason, cache_hit=True,
+            user_id=user_id,
+            trigger_reason=trigger_reason,
+            cache_hit=True,
             model=settings.MESH_CHAT_MODEL,
         )
         logger.info("agent_cache_hit", user_id=user_id, trigger_reason=trigger_reason)
@@ -97,14 +101,20 @@ async def run_agent(user_id: str, trigger_reason: str) -> dict | None:
     except MeshError as e:
         logger.error("agent_run_failed", user_id=user_id, error=str(e))
         await catalog.insert_agent_run(
-            user_id=user_id, trigger_reason=trigger_reason, error=str(e),
+            user_id=user_id,
+            trigger_reason=trigger_reason,
+            error=str(e),
             model=settings.MESH_CHAT_MODEL,
         )
         return current_rec
     except Exception as e:  # noqa: BLE001 - the agent must never crash the caller
-        logger.error("agent_run_unexpected_failure", user_id=user_id, error=str(e), exc_info=True)
+        logger.error(
+            "agent_run_unexpected_failure", user_id=user_id, error=str(e), exc_info=True
+        )
         await catalog.insert_agent_run(
-            user_id=user_id, trigger_reason=trigger_reason, error=f"unexpected: {e}",
+            user_id=user_id,
+            trigger_reason=trigger_reason,
+            error=f"unexpected: {e}",
             model=settings.MESH_CHAT_MODEL,
         )
         return current_rec

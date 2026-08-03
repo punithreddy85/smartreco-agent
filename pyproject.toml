@@ -85,6 +85,20 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
+# These modules share a `async with AsyncExitStack() as stack: ... return ...`
+# connection-borrowing pattern. AsyncExitStack.__aexit__ is typed to return
+# `bool` (it can suppress exceptions via registered callbacks), so mypy must
+# assume control could fall through past the `with` block even though nothing
+# here ever suppresses an exception - a well-known false positive, not a real
+# missing-return bug. See https://github.com/python/mypy/issues/7726.
+[[tool.mypy.overrides]]
+module = [
+    "smartreco_agent.src.db.catalog",
+    "smartreco_agent.src.db.outbox",
+    "smartreco_agent.src.vectors.pgvector_store",
+]
+disable_error_code = ["return"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

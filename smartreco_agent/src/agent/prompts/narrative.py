@@ -32,7 +32,9 @@ def build_narrative_prompt(
     user = (
         f"Learner themes: {', '.join(themes)}\n"
         f"Journey stage: {journey_stage}\n\n"
-        f"Candidate courses (choose up to 4, ranked best first):\n" + "\n".join(candidate_lines) + "\n\n"
+        f"Candidate courses (choose up to 4, ranked best first):\n"
+        + "\n".join(candidate_lines)
+        + "\n\n"
         "Write the narrative, then list the chosen courses as items with a one-sentence "
         "reason each, referencing this learner's behaviour."
     )

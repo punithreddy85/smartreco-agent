@@ -42,8 +42,14 @@ class PgVectorStore:
                     """,
                     [
                         (
-                            i.product_id, i.embedding, i.content_hash, i.model,
-                            i.category, i.level, i.price_cents, i.is_active,
+                            i.product_id,
+                            i.embedding,
+                            i.content_hash,
+                            i.model,
+                            i.category,
+                            i.level,
+                            i.price_cents,
+                            i.is_active,
                         )
                         for i in items
                     ],
@@ -109,11 +115,15 @@ class PgVectorStore:
     async def all_hashes(self) -> dict[str, str]:
         async with get_connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("select product_id, content_hash from vectors.product_embeddings")
+                await cur.execute(
+                    "select product_id, content_hash from vectors.product_embeddings"
+                )
                 rows = await cur.fetchall()
                 return {str(r["product_id"]): r["content_hash"] for r in rows}
 
-    async def get_embeddings(self, product_ids: Sequence[str]) -> dict[str, list[float]]:
+    async def get_embeddings(
+        self, product_ids: Sequence[str]
+    ) -> dict[str, list[float]]:
         if not product_ids:
             return {}
         async with get_connection() as conn:

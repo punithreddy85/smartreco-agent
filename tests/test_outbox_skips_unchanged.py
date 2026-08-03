@@ -55,8 +55,12 @@ async def test_drain_outbox_skips_unchanged_content(monkeypatch):
     }
     outbox_row = {"id": 1, "product_id": PRODUCT_ID, "op": "upsert"}
 
-    monkeypatch.setattr(outbox_drainer.outbox, "claim_pending", AsyncMock(return_value=[outbox_row]))
-    monkeypatch.setattr(outbox_drainer.catalog, "get_products_by_ids", AsyncMock(return_value=[product]))
+    monkeypatch.setattr(
+        outbox_drainer.outbox, "claim_pending", AsyncMock(return_value=[outbox_row])
+    )
+    monkeypatch.setattr(
+        outbox_drainer.catalog, "get_products_by_ids", AsyncMock(return_value=[product])
+    )
     mark_done = AsyncMock()
     monkeypatch.setattr(outbox_drainer.outbox, "mark_done", mark_done)
     monkeypatch.setattr(outbox_drainer.outbox, "mark_failed", AsyncMock())
@@ -92,8 +96,12 @@ async def test_drain_outbox_embeds_when_content_actually_changed(monkeypatch):
     }
     outbox_row = {"id": 2, "product_id": PRODUCT_ID, "op": "upsert"}
 
-    monkeypatch.setattr(outbox_drainer.outbox, "claim_pending", AsyncMock(return_value=[outbox_row]))
-    monkeypatch.setattr(outbox_drainer.catalog, "get_products_by_ids", AsyncMock(return_value=[product]))
+    monkeypatch.setattr(
+        outbox_drainer.outbox, "claim_pending", AsyncMock(return_value=[outbox_row])
+    )
+    monkeypatch.setattr(
+        outbox_drainer.catalog, "get_products_by_ids", AsyncMock(return_value=[product])
+    )
     mark_done = AsyncMock()
     monkeypatch.setattr(outbox_drainer.outbox, "mark_done", mark_done)
     monkeypatch.setattr(outbox_drainer.outbox, "mark_failed", AsyncMock())
@@ -102,8 +110,13 @@ async def test_drain_outbox_embeds_when_content_actually_changed(monkeypatch):
 
     embedded = [
         EmbeddedProduct(
-            product_id=PRODUCT_ID, embedding=[0.1, 0.2], content_hash="new-hash",
-            model="test-model", category="Agentic AI", level="beginner", price_cents=9900,
+            product_id=PRODUCT_ID,
+            embedding=[0.1, 0.2],
+            content_hash="new-hash",
+            model="test-model",
+            category="Agentic AI",
+            level="beginner",
+            price_cents=9900,
         )
     ]
     embed_products = AsyncMock(return_value=embedded)

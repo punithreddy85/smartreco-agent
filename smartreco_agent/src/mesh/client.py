@@ -109,17 +109,26 @@ async def complete_json(
     except APIStatusError as e:
         if e.status_code == 402:
             raise BalanceExhausted("Mesh balance/spend-limit exhausted") from e
-        raise MeshError(f"Mesh chat completion failed: {e.status_code} {e.message}") from e
+        raise MeshError(
+            f"Mesh chat completion failed: {e.status_code} {e.message}"
+        ) from e
 
     choice = resp.choices[0]
     usage = Usage(**(resp.usage.model_dump() if resp.usage else {}))
 
     if choice.finish_reason not in ("stop", None):
-        logger.warning("mesh_truncated_response", finish_reason=choice.finish_reason, model=model)
+        logger.warning(
+            "mesh_truncated_response", finish_reason=choice.finish_reason, model=model
+        )
         if _retry:
             return await complete_json(
-                model=model, system=system, user=user, schema=schema,
-                max_tokens=max_tokens * 2, temperature=temperature, _retry=False,
+                model=model,
+                system=system,
+                user=user,
+                schema=schema,
+                max_tokens=max_tokens * 2,
+                temperature=temperature,
+                _retry=False,
             )
         raise ParseFailure(f"Response truncated (finish_reason={choice.finish_reason})")
 
@@ -131,12 +140,18 @@ async def complete_json(
         logger.warning("mesh_parse_failure", model=model, error=str(e), raw=raw[:500])
         if _retry:
             return await complete_json(
-                model=model, system=system,
+                model=model,
+                system=system,
                 user=f"{user}\n\nYour previous response was not valid JSON matching the schema. "
-                     f"Return only valid JSON matching the schema, nothing else.",
-                schema=schema, max_tokens=max_tokens, temperature=temperature, _retry=False,
+                f"Return only valid JSON matching the schema, nothing else.",
+                schema=schema,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                _retry=False,
             )
-        raise ParseFailure(f"Could not parse Mesh response into {schema.__name__}: {e}") from e
+        raise ParseFailure(
+            f"Could not parse Mesh response into {schema.__name__}: {e}"
+        ) from e
 
     return parsed, usage
 
@@ -164,7 +179,9 @@ async def embed(
     except APIStatusError as e:
         if e.status_code == 402:
             raise BalanceExhausted("Mesh balance/spend-limit exhausted") from e
-        raise MeshError(f"Mesh embeddings call failed: {e.status_code} {e.message}") from e
+        raise MeshError(
+            f"Mesh embeddings call failed: {e.status_code} {e.message}"
+        ) from e
 
     return [d.embedding for d in resp.data]
 
@@ -216,4 +233,8 @@ async def assert_models_capable() -> None:
             schema=_Probe,
             max_tokens=50,
         )
-    logger.info("mesh_capability_check_passed", chat=settings.MESH_CHAT_MODEL, embed=settings.MESH_EMBED_MODEL)
+    logger.info(
+        "mesh_capability_check_passed",
+        chat=settings.MESH_CHAT_MODEL,
+        embed=settings.MESH_EMBED_MODEL,
+    )

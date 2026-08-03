@@ -29,7 +29,9 @@ async def analyze_intent(state: AgentState) -> AgentState:
         max_tokens=400,
     )
 
-    prompt_tokens, completion_tokens = add_tokens(state, usage.prompt_tokens, usage.completion_tokens)
+    prompt_tokens, completion_tokens = add_tokens(
+        state, usage.prompt_tokens, usage.completion_tokens
+    )
 
     return {
         "intent": intent,

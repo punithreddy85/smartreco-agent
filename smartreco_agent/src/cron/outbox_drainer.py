@@ -55,7 +55,9 @@ async def drain_outbox(limit: int = 50) -> DrainReport:
 
     if upsert_rows:
         product_ids = [str(r["product_id"]) for r in upsert_rows]
-        products = {str(p["id"]): p for p in await catalog.get_products_by_ids(product_ids)}
+        products = {
+            str(p["id"]): p for p in await catalog.get_products_by_ids(product_ids)
+        }
         existing_hashes = await store.all_hashes()
 
         needs_embed: list[dict] = []
@@ -99,7 +101,10 @@ async def drain_outbox(limit: int = 50) -> DrainReport:
 
     logger.info(
         "outbox_drain_complete",
-        claimed=report.claimed, embedded=report.embedded,
-        skipped_unchanged=report.skipped_unchanged, deleted=report.deleted, failed=report.failed,
+        claimed=report.claimed,
+        embedded=report.embedded,
+        skipped_unchanged=report.skipped_unchanged,
+        deleted=report.deleted,
+        failed=report.failed,
     )
     return report

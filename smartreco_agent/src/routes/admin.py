@@ -29,12 +29,18 @@ async def admin_home(admin: CurrentUser = Depends(require_admin)):
 @router.get("/products")
 async def list_products(request: Request, admin: CurrentUser = Depends(require_admin)):
     products = await catalog.list_products(active_only=False)
-    return templates.TemplateResponse(request, "admin/products.html", {"products": products})
+    return templates.TemplateResponse(
+        request, "admin/products.html", {"products": products}
+    )
 
 
 @router.get("/products/new")
-async def new_product_form(request: Request, admin: CurrentUser = Depends(require_admin)):
-    return templates.TemplateResponse(request, "admin/product_form.html", {"product": None, "error": None})
+async def new_product_form(
+    request: Request, admin: CurrentUser = Depends(require_admin)
+):
+    return templates.TemplateResponse(
+        request, "admin/product_form.html", {"product": None, "error": None}
+    )
 
 
 @router.post("/products/new")
@@ -53,8 +59,15 @@ async def create_product(
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
     async with transaction() as conn:
         product = await catalog.upsert_product(
-            product_id=None, title=title, description=description, category=category,
-            level=level, price_cents=price_cents, tags=tag_list, is_active=is_active is not None, conn=conn,
+            product_id=None,
+            title=title,
+            description=description,
+            category=category,
+            level=level,
+            price_cents=price_cents,
+            tags=tag_list,
+            is_active=is_active is not None,
+            conn=conn,
         )
         await outbox.enqueue(product["id"], op="upsert", conn=conn)
 
@@ -63,9 +76,13 @@ async def create_product(
 
 
 @router.get("/products/{product_id}/edit")
-async def edit_product_form(request: Request, product_id: str, admin: CurrentUser = Depends(require_admin)):
+async def edit_product_form(
+    request: Request, product_id: str, admin: CurrentUser = Depends(require_admin)
+):
     product = await catalog.get_product(product_id)
-    return templates.TemplateResponse(request, "admin/product_form.html", {"product": product, "error": None})
+    return templates.TemplateResponse(
+        request, "admin/product_form.html", {"product": product, "error": None}
+    )
 
 
 @router.post("/products/{product_id}/edit")
@@ -85,8 +102,15 @@ async def update_product(
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
     async with transaction() as conn:
         product = await catalog.upsert_product(
-            product_id=product_id, title=title, description=description, category=category,
-            level=level, price_cents=price_cents, tags=tag_list, is_active=is_active is not None, conn=conn,
+            product_id=product_id,
+            title=title,
+            description=description,
+            category=category,
+            level=level,
+            price_cents=price_cents,
+            tags=tag_list,
+            is_active=is_active is not None,
+            conn=conn,
         )
         await outbox.enqueue(product["id"], op="upsert", conn=conn)
 
@@ -96,7 +120,9 @@ async def update_product(
 
 @router.post("/products/{product_id}/delete")
 async def remove_product(
-    product_id: str, background_tasks: BackgroundTasks, admin: CurrentUser = Depends(require_admin)
+    product_id: str,
+    background_tasks: BackgroundTasks,
+    admin: CurrentUser = Depends(require_admin),
 ):
     async with transaction() as conn:
         await outbox.enqueue(product_id, op="delete", conn=conn)

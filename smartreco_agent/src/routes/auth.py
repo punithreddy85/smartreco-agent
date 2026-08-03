@@ -28,18 +28,26 @@ async def register_submit(
 ):
     if len(password) < 8:
         return templates.TemplateResponse(
-            request, "register.html", {"error": "Password must be at least 8 characters."}
+            request,
+            "register.html",
+            {"error": "Password must be at least 8 characters."},
         )
     try:
-        user = await catalog.create_user(email=email, password_hash=hash_password(password))
+        user = await catalog.create_user(
+            email=email, password_hash=hash_password(password)
+        )
     except UniqueViolation:
         return templates.TemplateResponse(
-            request, "register.html", {"error": "An account with that email already exists."}
+            request,
+            "register.html",
+            {"error": "An account with that email already exists."},
         )
     except Exception as e:
         logger.error("registration_failed", error=str(e))
         return templates.TemplateResponse(
-            request, "register.html", {"error": "Could not create account. Please try again."}
+            request,
+            "register.html",
+            {"error": "Could not create account. Please try again."},
         )
 
     response = RedirectResponse(url="/", status_code=303)

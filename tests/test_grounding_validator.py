@@ -50,10 +50,17 @@ def _hallucinated_response() -> tuple[Recommendation, Usage]:
 
 @pytest.mark.asyncio
 async def test_grounding_validator_rejects_hallucination_after_retry(monkeypatch):
-    mock_complete = AsyncMock(side_effect=[_hallucinated_response(), _hallucinated_response()])
+    mock_complete = AsyncMock(
+        side_effect=[_hallucinated_response(), _hallucinated_response()]
+    )
     monkeypatch.setattr(generate_module, "complete_json", mock_complete)
 
-    state = {"reranked": CANDIDATES, "intent": INTENT, "prompt_tokens": 0, "completion_tokens": 0}
+    state = {
+        "reranked": CANDIDATES,
+        "intent": INTENT,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+    }
     result = await generate_module.generate_and_verify(state)
 
     assert result["recommendation"] is None
@@ -69,10 +76,20 @@ async def test_grounding_validator_accepts_grounded_response(monkeypatch):
         narrative="You'll love this course.",
         items=[RecommendedItem(product_id=REAL_ID, reason="great fit")],
     )
-    mock_complete = AsyncMock(return_value=(rec, Usage(prompt_tokens=80, completion_tokens=40, total_tokens=120)))
+    mock_complete = AsyncMock(
+        return_value=(
+            rec,
+            Usage(prompt_tokens=80, completion_tokens=40, total_tokens=120),
+        )
+    )
     monkeypatch.setattr(generate_module, "complete_json", mock_complete)
 
-    state = {"reranked": CANDIDATES, "intent": INTENT, "prompt_tokens": 0, "completion_tokens": 0}
+    state = {
+        "reranked": CANDIDATES,
+        "intent": INTENT,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+    }
     result = await generate_module.generate_and_verify(state)
 
     assert result["recommendation"] is rec
@@ -84,7 +101,8 @@ async def test_grounding_validator_accepts_grounded_response(monkeypatch):
 async def test_grounding_validator_recovers_on_retry(monkeypatch):
     """If the retry corrects itself and cites only real products, it is accepted."""
     good_rec = Recommendation(
-        narrative="Corrected.", items=[RecommendedItem(product_id=REAL_ID, reason="great fit")]
+        narrative="Corrected.",
+        items=[RecommendedItem(product_id=REAL_ID, reason="great fit")],
     )
     mock_complete = AsyncMock(
         side_effect=[
@@ -94,7 +112,12 @@ async def test_grounding_validator_recovers_on_retry(monkeypatch):
     )
     monkeypatch.setattr(generate_module, "complete_json", mock_complete)
 
-    state = {"reranked": CANDIDATES, "intent": INTENT, "prompt_tokens": 0, "completion_tokens": 0}
+    state = {
+        "reranked": CANDIDATES,
+        "intent": INTENT,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+    }
     result = await generate_module.generate_and_verify(state)
 
     assert result["recommendation"] is good_rec

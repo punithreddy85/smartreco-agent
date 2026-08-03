@@ -23,7 +23,11 @@ DRIFT_THRESHOLD = 0.15  # cosine *distance* (1 - similarity)
 
 
 def _top_category(weights: dict[str, float]) -> Optional[str]:
-    category_weights = {k[len("category:") :]: v for k, v in weights.items() if k.startswith("category:")}
+    category_weights = {
+        k[len("category:") :]: v
+        for k, v in weights.items()
+        if k.startswith("category:")
+    }
     if not category_weights:
         return None
     return max(category_weights.items(), key=lambda kv: kv[1])[0]
@@ -69,7 +73,11 @@ async def should_generate(user_id: str, *, force: bool = False) -> Optional[str]
     if current_rec:
         top_category = _top_category(profile.get("weights") or {})
         current_categories = {item["category"] for item in current_rec.get("items", [])}
-        if top_category and current_categories and top_category not in current_categories:
+        if (
+            top_category
+            and current_categories
+            and top_category not in current_categories
+        ):
             return "category_shift"
 
     return None

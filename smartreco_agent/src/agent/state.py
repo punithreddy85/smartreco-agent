@@ -22,7 +22,9 @@ class AgentState(TypedDict, total=False):
     grade_passed: bool
     refine_loops: int
 
-    reranked: list[dict[str, Any]]  # ScoredProduct-ish dict + fused `score` + product row fields
+    reranked: list[
+        dict[str, Any]
+    ]  # ScoredProduct-ish dict + fused `score` + product row fields
 
     recommendation: Optional[Recommendation]
 
@@ -40,7 +42,9 @@ def with_timing(state: AgentState, node: str, elapsed: float) -> dict[str, float
     return timings
 
 
-def add_tokens(state: AgentState, prompt_tokens: int, completion_tokens: int) -> tuple[int, int]:
+def add_tokens(
+    state: AgentState, prompt_tokens: int, completion_tokens: int
+) -> tuple[int, int]:
     return (
         state.get("prompt_tokens", 0) + prompt_tokens,
         state.get("completion_tokens", 0) + completion_tokens,

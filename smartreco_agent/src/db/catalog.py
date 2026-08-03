@@ -146,7 +146,16 @@ async def upsert_product(
                     values (%s, %s, %s, %s, %s, %s, %s, %s)
                     returning *
                     """,
-                    (title, description, category, level, price_cents, list(tags), is_active, hash_value),
+                    (
+                        title,
+                        description,
+                        category,
+                        level,
+                        price_cents,
+                        list(tags),
+                        is_active,
+                        hash_value,
+                    ),
                 )
             else:
                 await cur.execute(
@@ -159,8 +168,15 @@ async def upsert_product(
                     returning *
                     """,
                     (
-                        title, description, category, level, price_cents,
-                        list(tags), is_active, hash_value, str(product_id),
+                        title,
+                        description,
+                        category,
+                        level,
+                        price_cents,
+                        list(tags),
+                        is_active,
+                        hash_value,
+                        str(product_id),
                     ),
                 )
             return await cur.fetchone()
@@ -191,7 +207,10 @@ async def all_product_hashes(conn=None) -> dict[str, str]:
 
 
 async def bulk_insert_events(
-    user_id: UUID | str, session_id: UUID | str, events: Sequence[dict[str, Any]], conn=None
+    user_id: UUID | str,
+    session_id: UUID | str,
+    events: Sequence[dict[str, Any]],
+    conn=None,
 ) -> int:
     """One multi-row INSERT. ON CONFLICT DO NOTHING makes retried/duplicate
     beacons idempotent on `event_id` (ARCHITECTURE.md \u00a76.1/6.2)."""
@@ -261,9 +280,7 @@ async def recent_search_queries(
             return [r["query"] for r in rows if r["query"]]
 
 
-async def dismissed_and_owned_product_ids(
-    user_id: UUID | str, conn=None
-) -> set[str]:
+async def dismissed_and_owned_product_ids(user_id: UUID | str, conn=None) -> set[str]:
     async with AsyncExitStack() as stack:
         c = await _conn_or_borrow(stack, conn)
         async with c.cursor() as cur:
@@ -278,7 +295,9 @@ async def dismissed_and_owned_product_ids(
             return {str(r["product_id"]) for r in rows}
 
 
-async def has_added_to_cart(user_id: UUID | str, product_id: UUID | str, conn=None) -> bool:
+async def has_added_to_cart(
+    user_id: UUID | str, product_id: UUID | str, conn=None
+) -> bool:
     """Whether this user has an `add_to_cart` event for this specific product -
     drives the product page rendering the button as already-added on load."""
     async with AsyncExitStack() as stack:
@@ -354,7 +373,8 @@ async def mark_digest_done(user_id: str, conn=None) -> None:
         c = await _conn_or_borrow(stack, conn)
         async with c.cursor() as cur:
             await cur.execute(
-                "update catalog.digest_queue set status = 'done' where user_id = %s", (user_id,)
+                "update catalog.digest_queue set status = 'done' where user_id = %s",
+                (user_id,),
             )
 
 
@@ -378,7 +398,8 @@ async def get_profile(user_id: UUID | str, conn=None) -> Optional[dict[str, Any]
         c = await _conn_or_borrow(stack, conn)
         async with c.cursor() as cur:
             await cur.execute(
-                "select * from catalog.user_profiles where user_id = %s", (str(user_id),)
+                "select * from catalog.user_profiles where user_id = %s",
+                (str(user_id),),
             )
             return await cur.fetchone()
 
@@ -408,8 +429,12 @@ async def upsert_profile(
                 returning *
                 """,
                 (
-                    str(user_id), Jsonb(weights), interest_vector, max(events_since_gen_delta, 0),
-                    profile_hash_value, events_since_gen_delta,
+                    str(user_id),
+                    Jsonb(weights),
+                    interest_vector,
+                    max(events_since_gen_delta, 0),
+                    profile_hash_value,
+                    events_since_gen_delta,
                 ),
             )
             return await cur.fetchone()
@@ -502,7 +527,14 @@ async def persist_recommendation(
                 values (%s, %s, %s, %s, %s, %s, true)
                 returning *
                 """,
-                (str(user_id), narrative, trigger_reason, profile_hash_value, model, prompt_version),
+                (
+                    str(user_id),
+                    narrative,
+                    trigger_reason,
+                    profile_hash_value,
+                    model,
+                    prompt_version,
+                ),
             )
             rec = await cur.fetchone()
             for rank, item in enumerate(items, start=1):
@@ -511,7 +543,13 @@ async def persist_recommendation(
                     insert into catalog.recommendation_items (rec_id, product_id, rank, reason, score)
                     values (%s, %s, %s, %s, %s)
                     """,
-                    (rec["id"], item["product_id"], rank, item["reason"], item["score"]),
+                    (
+                        rec["id"],
+                        item["product_id"],
+                        rank,
+                        item["reason"],
+                        item["score"],
+                    ),
                 )
             return rec
 
@@ -547,9 +585,16 @@ async def insert_agent_run(
                 returning *
                 """,
                 (
-                    str(user_id), trigger_reason, cache_hit, refine_loops,
-                    [str(i) for i in retrieved_ids], Jsonb(node_timings or {}), model,
-                    prompt_tokens, completion_tokens, error,
+                    str(user_id),
+                    trigger_reason,
+                    cache_hit,
+                    refine_loops,
+                    [str(i) for i in retrieved_ids],
+                    Jsonb(node_timings or {}),
+                    model,
+                    prompt_tokens,
+                    completion_tokens,
+                    error,
                 ),
             )
             return await cur.fetchone()

@@ -24,11 +24,17 @@ def build_intent_prompt(
         "'technology' are useless for retrieval. Prefer themes phrased the way a course "
         "title or search query would be phrased."
     )
-    events_summary = "\n".join(
-        f"- {e['type']}" + (f" (product {e['product_id']})" if e.get("product_id") else "")
-        for e in recent_events[:20]
-    ) or "(no recent events)"
-    searches = "\n".join(f"- {q}" for q in recent_search_queries) or "(no recent searches)"
+    events_summary = (
+        "\n".join(
+            f"- {e['type']}"
+            + (f" (product {e['product_id']})" if e.get("product_id") else "")
+            for e in recent_events[:20]
+        )
+        or "(no recent events)"
+    )
+    searches = (
+        "\n".join(f"- {q}" for q in recent_search_queries) or "(no recent searches)"
+    )
 
     user = (
         f"Decayed interest weights (higher = more current interest):\n"
@@ -43,7 +49,9 @@ def build_intent_prompt(
     return system, user
 
 
-def build_refine_prompt(*, previous_queries: list[str], grade_reasons: list[str]) -> tuple[str, str]:
+def build_refine_prompt(
+    *, previous_queries: list[str], grade_reasons: list[str]
+) -> tuple[str, str]:
     system = (
         "Your previous set of search queries did not retrieve enough relevant, diverse "
         "results from the course catalog. Broaden or re-angle them - do not repeat the "

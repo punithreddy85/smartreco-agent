@@ -56,7 +56,10 @@ async def persist(state: AgentState) -> AgentState:
             conn=conn,
         )
         await catalog.mark_generated(
-            user_id, gen_vector=profile.get("interest_vector"), profile_hash_value=profile_hash_value, conn=conn,
+            user_id,
+            gen_vector=profile.get("interest_vector"),
+            profile_hash_value=profile_hash_value,
+            conn=conn,
         )
 
     await catalog.insert_agent_run(

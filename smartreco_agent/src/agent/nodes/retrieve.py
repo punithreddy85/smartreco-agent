@@ -24,7 +24,9 @@ LEVEL_BAND = {
 }
 
 
-async def _mmr_dedupe(candidates: list[ScoredProduct], limit: int) -> list[ScoredProduct]:
+async def _mmr_dedupe(
+    candidates: list[ScoredProduct], limit: int
+) -> list[ScoredProduct]:
     if len(candidates) <= 1:
         return candidates
 
@@ -38,19 +40,24 @@ async def _mmr_dedupe(candidates: list[ScoredProduct], limit: int) -> list[Score
     selected_vectors: list[np.ndarray] = []
 
     while remaining and len(selected) < limit:
-        best, best_score = None, -1e9
+        best: ScoredProduct | None = None
+        best_score = -1e9
         for c in remaining:
             vec = np.array(embeddings[c.product_id])
             diversity_penalty = 0.0
             if selected_vectors:
                 sims = [
-                    float(np.dot(vec, sv) / (np.linalg.norm(vec) * np.linalg.norm(sv) + 1e-9))
+                    float(
+                        np.dot(vec, sv)
+                        / (np.linalg.norm(vec) * np.linalg.norm(sv) + 1e-9)
+                    )
                     for sv in selected_vectors
                 ]
                 diversity_penalty = max(sims)
             mmr_score = MMR_LAMBDA * c.similarity - (1 - MMR_LAMBDA) * diversity_penalty
             if mmr_score > best_score:
                 best, best_score = c, mmr_score
+        assert best is not None, "remaining is non-empty per the while condition"
         selected.append(best)
         selected_vectors.append(np.array(embeddings[best.product_id]))
         remaining.remove(best)
@@ -61,6 +68,9 @@ async def _mmr_dedupe(candidates: list[ScoredProduct], limit: int) -> list[Score
 async def retrieve(state: AgentState) -> AgentState:
     t0 = time.monotonic()
     intent = state["intent"]
+    assert intent is not None, (
+        "retrieve runs only after analyze_intent has populated state['intent']"
+    )
     profile = state.get("profile") or {}
     excluded = state.get("excluded_product_ids") or set()
 
@@ -75,18 +85,28 @@ async def retrieve(state: AgentState) -> AgentState:
 
     for query_text in intent.retrieval_queries:
         query_vector = await embed_query_cached(query_text)
-        results = await store.search(query_vector, RETRIEVAL_CANDIDATES_PER_QUERY, filters)
+        results = await store.search(
+            query_vector, RETRIEVAL_CANDIDATES_PER_QUERY, filters
+        )
         for r in results:
-            if r.product_id not in by_id or r.similarity > by_id[r.product_id].similarity:
+            if (
+                r.product_id not in by_id
+                or r.similarity > by_id[r.product_id].similarity
+            ):
                 by_id[r.product_id] = r
 
     # The raw behavioural interest vector is an unconditional 5th query: if the
     # LLM misreads intent, the behaviour-derived signal still contributes.
     interest_vector = profile.get("interest_vector")
     if interest_vector:
-        results = await store.search(interest_vector, RETRIEVAL_CANDIDATES_PER_QUERY, filters)
+        results = await store.search(
+            interest_vector, RETRIEVAL_CANDIDATES_PER_QUERY, filters
+        )
         for r in results:
-            if r.product_id not in by_id or r.similarity > by_id[r.product_id].similarity:
+            if (
+                r.product_id not in by_id
+                or r.similarity > by_id[r.product_id].similarity
+            ):
                 by_id[r.product_id] = r
 
     unioned = sorted(by_id.values(), key=lambda c: c.similarity, reverse=True)

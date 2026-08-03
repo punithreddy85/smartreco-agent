@@ -70,7 +70,9 @@ async def apply(user_id: str, events: list[dict[str, Any]]) -> dict[str, Any]:
     weights: dict[str, float] = dict((profile or {}).get("weights") or {})
     weights = _decay_all(weights, hours_elapsed)
 
-    old_vector = np.array((profile or {}).get("interest_vector") or [], dtype=np.float64)
+    old_vector = np.array(
+        (profile or {}).get("interest_vector") or [], dtype=np.float64
+    )
     vector_contribution = np.zeros(settings.MESH_EMBED_DIMENSIONS, dtype=np.float64)
     has_contribution = False
 
@@ -94,10 +96,16 @@ async def apply(user_id: str, events: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         countable_events += 1
 
-        product = products_by_id.get(str(event["product_id"])) if event.get("product_id") else None
+        product = (
+            products_by_id.get(str(event["product_id"]))
+            if event.get("product_id")
+            else None
+        )
 
         if product:
-            weights[f"category:{product['category']}"] = weights.get(f"category:{product['category']}", 0.0) + w
+            weights[f"category:{product['category']}"] = (
+                weights.get(f"category:{product['category']}", 0.0) + w
+            )
             for tag in product.get("tags") or []:
                 weights[f"tag:{tag}"] = weights.get(f"tag:{tag}", 0.0) + w
 
@@ -109,15 +117,21 @@ async def apply(user_id: str, events: list[dict[str, Any]]) -> dict[str, Any]:
         if event["type"] == "search":
             query = (event.get("payload") or {}).get("query", "").strip()
             if query:
-                weights[f"query:{query.lower()}"] = weights.get(f"query:{query.lower()}", 0.0) + w
+                weights[f"query:{query.lower()}"] = (
+                    weights.get(f"query:{query.lower()}", 0.0) + w
+                )
                 try:
                     query_embedding = await embed_query_cached(query)
-                    vector_contribution += EVENT_WEIGHT["search"] * np.array(query_embedding, dtype=np.float64)
+                    vector_contribution += EVENT_WEIGHT["search"] * np.array(
+                        query_embedding, dtype=np.float64
+                    )
                     has_contribution = True
                 except Exception as e:  # noqa: BLE001 - never fail the whole batch on an embedding hiccup
                     logger.warning("search_embed_failed", error=str(e), query=query)
 
-    decayed_old_vector = old_vector * _decay_factor(hours_elapsed) if old_vector.size else old_vector
+    decayed_old_vector = (
+        old_vector * _decay_factor(hours_elapsed) if old_vector.size else old_vector
+    )
     if decayed_old_vector.size and has_contribution:
         combined = decayed_old_vector + vector_contribution
     elif has_contribution:

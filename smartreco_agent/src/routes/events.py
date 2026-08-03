@@ -31,10 +31,14 @@ async def _process_batch_and_maybe_generate(user_id: str, events: list[dict]) ->
             logger.info("trigger_fired", user_id=user_id, reason=reason)
             await run_agent(user_id, trigger_reason=reason)
     except Exception as e:  # noqa: BLE001 - background work must never crash the process
-        logger.error("event_processing_failed", user_id=user_id, error=str(e), exc_info=True)
+        logger.error(
+            "event_processing_failed", user_id=user_id, error=str(e), exc_info=True
+        )
 
 
-@router.post("/api/events", status_code=status.HTTP_202_ACCEPTED, response_model=IngestResponse)
+@router.post(
+    "/api/events", status_code=status.HTTP_202_ACCEPTED, response_model=IngestResponse
+)
 async def ingest(
     batch: EventBatch,
     background_tasks: BackgroundTasks,
@@ -51,7 +55,11 @@ async def ingest(
         for e in batch.events
     ]
 
-    inserted = await catalog.bulk_insert_events(user.id, str(batch.session_id), events_payload)
-    background_tasks.add_task(_process_batch_and_maybe_generate, user.id, events_payload)
+    inserted = await catalog.bulk_insert_events(
+        user.id, str(batch.session_id), events_payload
+    )
+    background_tasks.add_task(
+        _process_batch_and_maybe_generate, user.id, events_payload
+    )
 
     return IngestResponse(accepted=inserted)

@@ -36,18 +36,29 @@ async def catalog_page(
     if q:
         needle = q.lower()
         products = [
-            p for p in products
+            p
+            for p in products
             if needle in p["title"].lower() or needle in p["description"].lower()
         ]
-    categories = sorted({p["category"] for p in await catalog.list_products(active_only=True)})
+    categories = sorted(
+        {p["category"] for p in await catalog.list_products(active_only=True)}
+    )
     return templates.TemplateResponse(
-        request, "catalog.html",
-        {"products": products, "categories": categories, "q": q or "", "active_category": category or ""},
+        request,
+        "catalog.html",
+        {
+            "products": products,
+            "categories": categories,
+            "q": q or "",
+            "active_category": category or "",
+        },
     )
 
 
 @router.get("/products/{product_id}")
-async def product_detail(request: Request, product_id: str, user: CurrentUser = Depends(require_user)):
+async def product_detail(
+    request: Request, product_id: str, user: CurrentUser = Depends(require_user)
+):
     product = await catalog.get_product(product_id)
     if not product:
         return RedirectResponse(url="/catalog")
@@ -58,7 +69,9 @@ async def product_detail(request: Request, product_id: str, user: CurrentUser = 
 
 
 @router.get("/recommendations")
-async def recommendations_page(request: Request, user: CurrentUser = Depends(require_user)):
+async def recommendations_page(
+    request: Request, user: CurrentUser = Depends(require_user)
+):
     rec = await catalog.get_current_recommendation(user.id)
     return templates.TemplateResponse(request, "recommendations.html", {"rec": rec})
 

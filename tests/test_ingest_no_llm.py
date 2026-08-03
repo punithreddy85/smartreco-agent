@@ -31,7 +31,11 @@ def client(monkeypatch):
 
     monkeypatch.setattr(mesh_client, "get_mesh_client", MagicMock(side_effect=_raise))
     monkeypatch.setattr(catalog, "bulk_insert_events", AsyncMock(return_value=2))
-    monkeypatch.setattr(catalog, "get_profile", AsyncMock(return_value={"weights": {}, "updated_at": None}))
+    monkeypatch.setattr(
+        catalog,
+        "get_profile",
+        AsyncMock(return_value={"weights": {}, "updated_at": None}),
+    )
     monkeypatch.setattr(catalog, "get_products_by_ids", AsyncMock(return_value=[]))
     monkeypatch.setattr(
         catalog,
@@ -48,7 +52,9 @@ def client(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        catalog, "get_current_recommendation", AsyncMock(return_value={"profile_hash": "unchanged", "items": []})
+        catalog,
+        "get_current_recommendation",
+        AsyncMock(return_value={"profile_hash": "unchanged", "items": []}),
     )
 
     # Deliberately not using `with TestClient(app)` - that would run the real
@@ -85,7 +91,9 @@ def test_ingest_returns_202_without_constructing_mesh_client(client):
 
 
 def test_ingest_rejects_empty_batch(client):
-    response = client.post("/api/events", json={"session_id": str(uuid.uuid4()), "events": []})
+    response = client.post(
+        "/api/events", json={"session_id": str(uuid.uuid4()), "events": []}
+    )
 
     assert response.status_code == 422  # EventBatch requires min_length=1
 

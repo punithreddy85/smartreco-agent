@@ -17,7 +17,9 @@ from smartreco_agent.src.tracking import profile
 
 def test_decay_factor_matches_formula():
     assert profile._decay_factor(0) == pytest.approx(1.0)
-    assert profile._decay_factor(profile.TAU_HOURS) == pytest.approx(math.exp(-1), rel=1e-9)
+    assert profile._decay_factor(profile.TAU_HOURS) == pytest.approx(
+        math.exp(-1), rel=1e-9
+    )
     assert profile._decay_factor(1000) < 0.001  # effectively fully decayed
 
 
@@ -27,8 +29,12 @@ def test_a_week_old_interest_ranks_below_an_hour_old_one():
     week_old_hours = 7 * 24
     hour_old_hours = 1
 
-    week_old_now = profile._decay_all({"category:X": original_weight}, week_old_hours)["category:X"]
-    hour_old_now = profile._decay_all({"category:X": original_weight}, hour_old_hours)["category:X"]
+    week_old_now = profile._decay_all({"category:X": original_weight}, week_old_hours)[
+        "category:X"
+    ]
+    hour_old_now = profile._decay_all({"category:X": original_weight}, hour_old_hours)[
+        "category:X"
+    ]
 
     assert week_old_now < hour_old_now
     # A week is ~2.33x tau (72h), so the week-old weight should have decayed

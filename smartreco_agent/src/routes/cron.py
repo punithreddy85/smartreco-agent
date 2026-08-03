@@ -22,8 +22,12 @@ router = APIRouter(prefix="/api/cron")
 
 
 def _check_secret(x_cron_secret: str | None) -> None:
-    if not x_cron_secret or not hmac.compare_digest(x_cron_secret, settings.CRON_SECRET):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid cron secret")
+    if not x_cron_secret or not hmac.compare_digest(
+        x_cron_secret, settings.CRON_SECRET
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid cron secret"
+        )
 
 
 @router.post("/digest")
@@ -45,8 +49,11 @@ async def cron_outbox(x_cron_secret: str | None = Header(default=None)):
     _check_secret(x_cron_secret)
     report = await drain_outbox()
     return {
-        "claimed": report.claimed, "embedded": report.embedded,
-        "skipped_unchanged": report.skipped_unchanged, "deleted": report.deleted, "failed": report.failed,
+        "claimed": report.claimed,
+        "embedded": report.embedded,
+        "skipped_unchanged": report.skipped_unchanged,
+        "deleted": report.deleted,
+        "failed": report.failed,
     }
 
 

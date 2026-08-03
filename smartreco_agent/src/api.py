@@ -38,7 +38,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Structured request/response logging, skipped for static assets to avoid noise."""
 
     async def dispatch(self, request: Request, call_next: Callable):
-        if not settings.REQUEST_LOGGING_ENABLED or request.url.path.startswith("/static"):
+        if not settings.REQUEST_LOGGING_ENABLED or request.url.path.startswith(
+            "/static"
+        ):
             return await call_next(request)
 
         start_time = time.time()
@@ -115,9 +117,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
-    logger.warning(
-        f"App exception for {request.method} {request.url.path}: {exc}"
-    )
+    logger.warning(f"App exception for {request.method} {request.url.path}: {exc}")
     return JSONResponse(
         status_code=exc.response_code,
         content={

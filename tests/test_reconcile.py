@@ -18,7 +18,9 @@ from smartreco_agent.src.cron import reconcile as reconcile_module
 PID_MISSING = "aaaaaaaa-0000-0000-0000-000000000001"  # in SQL, never embedded
 PID_STALE = "aaaaaaaa-0000-0000-0000-000000000002"  # in both, hash differs
 PID_SYNCED = "aaaaaaaa-0000-0000-0000-000000000003"  # in both, hash matches - untouched
-PID_ORPHAN = "aaaaaaaa-0000-0000-0000-000000000004"  # in vectors only - product row deleted
+PID_ORPHAN = (
+    "aaaaaaaa-0000-0000-0000-000000000004"  # in vectors only - product row deleted
+)
 
 
 @pytest.mark.asyncio
@@ -34,7 +36,11 @@ async def test_reconcile_repairs_drift(monkeypatch):
         PID_ORPHAN: "hash-orphan",
     }
 
-    monkeypatch.setattr(reconcile_module.catalog, "all_product_hashes", AsyncMock(return_value=sql_hashes))
+    monkeypatch.setattr(
+        reconcile_module.catalog,
+        "all_product_hashes",
+        AsyncMock(return_value=sql_hashes),
+    )
 
     fake_store = AsyncMock()
     fake_store.all_hashes = AsyncMock(return_value=vec_hashes)
@@ -49,8 +55,12 @@ async def test_reconcile_repairs_drift(monkeypatch):
     assert report.stale == 1
     assert report.orphans == 1
 
-    upsert_call = next(c for c in enqueue_many.call_args_list if c.kwargs.get("op") == "upsert")
-    delete_call = next(c for c in enqueue_many.call_args_list if c.kwargs.get("op") == "delete")
+    upsert_call = next(
+        c for c in enqueue_many.call_args_list if c.kwargs.get("op") == "upsert"
+    )
+    delete_call = next(
+        c for c in enqueue_many.call_args_list if c.kwargs.get("op") == "delete"
+    )
 
     assert set(upsert_call.args[0]) == {PID_MISSING, PID_STALE}
     assert set(delete_call.args[0]) == {PID_ORPHAN}

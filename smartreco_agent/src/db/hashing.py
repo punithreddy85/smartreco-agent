@@ -23,7 +23,15 @@ def content_hash(
 ) -> str:
     """Sha256 over the embeddable fields of a product."""
     normalized_tags = "|".join(sorted(tags))
-    payload = "||".join([title.strip(), description.strip(), category.strip(), level.strip(), normalized_tags])
+    payload = "||".join(
+        [
+            title.strip(),
+            description.strip(),
+            category.strip(),
+            level.strip(),
+            normalized_tags,
+        ]
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -32,12 +40,12 @@ def embeddable_text(
 ) -> str:
     """The text that is actually sent to the embedding model for a product."""
     tag_text = ", ".join(tags)
-    return (
-        f"{title}\n\nCategory: {category} | Level: {level} | Tags: {tag_text}\n\n{description}"
-    )
+    return f"{title}\n\nCategory: {category} | Level: {level} | Tags: {tag_text}\n\n{description}"
 
 
-def profile_hash(weights: Mapping[str, float], *, top_k: int = 12, precision: int = 2) -> str:
+def profile_hash(
+    weights: Mapping[str, float], *, top_k: int = 12, precision: int = 2
+) -> str:
     """Sha256 over the rounded top-K interest weights, order-independent."""
     top = sorted(weights.items(), key=lambda kv: kv[1], reverse=True)[:top_k]
     rounded = {k: round(v, precision) for k, v in top if round(v, precision) != 0}

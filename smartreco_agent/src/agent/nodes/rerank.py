@@ -19,7 +19,11 @@ POPULARITY_PRIOR = 0.5  # placeholder: no enrolment/popularity data source exist
 
 
 def _category_match(category: str, weights: dict[str, float]) -> float:
-    category_weights = {k[len("category:") :]: v for k, v in weights.items() if k.startswith("category:")}
+    category_weights = {
+        k[len("category:") :]: v
+        for k, v in weights.items()
+        if k.startswith("category:")
+    }
     if not category_weights:
         return 0.0
     max_weight = max(category_weights.values())
@@ -28,11 +32,15 @@ def _category_match(category: str, weights: dict[str, float]) -> float:
     return max(category_weights.get(category, 0.0), 0.0) / max_weight
 
 
-async def _recency_by_category(recent_events: list[dict], now: datetime) -> dict[str, float]:
+async def _recency_by_category(
+    recent_events: list[dict], now: datetime
+) -> dict[str, float]:
     product_ids = {str(e["product_id"]) for e in recent_events if e.get("product_id")}
     if not product_ids:
         return {}
-    products = {str(p["id"]): p for p in await catalog.get_products_by_ids(list(product_ids))}
+    products = {
+        str(p["id"]): p for p in await catalog.get_products_by_ids(list(product_ids))
+    }
 
     most_recent_by_category: dict[str, datetime] = {}
     for e in recent_events:
@@ -41,11 +49,16 @@ async def _recency_by_category(recent_events: list[dict], now: datetime) -> dict
             continue
         category = products[pid]["category"]
         occurred_at = e["occurred_at"]
-        if category not in most_recent_by_category or occurred_at > most_recent_by_category[category]:
+        if (
+            category not in most_recent_by_category
+            or occurred_at > most_recent_by_category[category]
+        ):
             most_recent_by_category[category] = occurred_at
 
     return {
-        category: math.exp(-max((now - ts).total_seconds() / 3600.0, 0.0) / RECENCY_TAU_HOURS)
+        category: math.exp(
+            -max((now - ts).total_seconds() / 3600.0, 0.0) / RECENCY_TAU_HOURS
+        )
         for category, ts in most_recent_by_category.items()
     }
 
@@ -56,7 +69,9 @@ async def rerank(state: AgentState) -> AgentState:
     weights = (state.get("profile") or {}).get("weights") or {}
     now = datetime.now(timezone.utc)
 
-    recency_by_category = await _recency_by_category(state.get("recent_events") or [], now)
+    recency_by_category = await _recency_by_category(
+        state.get("recent_events") or [], now
+    )
 
     scored = []
     for c in candidates:
@@ -74,7 +89,10 @@ async def rerank(state: AgentState) -> AgentState:
     scored.sort(key=lambda pair: pair[0], reverse=True)
     top = scored[:RERANK_TOP_N]
 
-    products = {str(p["id"]): p for p in await catalog.get_products_by_ids([c.product_id for _, c in top])}
+    products = {
+        str(p["id"]): p
+        for p in await catalog.get_products_by_ids([c.product_id for _, c in top])
+    }
 
     reranked = []
     for fused_score, c in top:

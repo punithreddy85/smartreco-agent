@@ -32,7 +32,14 @@ repos:
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: [--convention=google]
+        # This is an internal application, not a published library: mandating a
+        # docstring on every private route handler / DB helper (D10x) is noise,
+        # not signal. D205/D209/D415/D403 are also disabled because this codebase
+        # consistently wraps a docstring's opening sentence across two lines
+        # before the blank line - readable, just not what strict PEP257 expects.
+        args:
+          - --convention=google
+          - --add-ignore=D100,D101,D102,D103,D104,D105,D107,D205,D209,D403,D415
         exclude: ^tests/
 
   - repo: https://github.com/PyCQA/bandit

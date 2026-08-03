@@ -16,9 +16,14 @@ from smartreco_agent.src.settings import settings
 async def refine(state: AgentState) -> AgentState:
     t0 = time.monotonic()
     intent = state["intent"]
+    assert intent is not None, (
+        "refine runs only after analyze_intent has populated state['intent']"
+    )
     reasons = grade_reasons(state)
 
-    system, user = build_refine_prompt(previous_queries=intent.retrieval_queries, grade_reasons=reasons)
+    system, user = build_refine_prompt(
+        previous_queries=intent.retrieval_queries, grade_reasons=reasons
+    )
 
     refined, usage = await complete_json(
         model=settings.MESH_CHEAP_MODEL,
@@ -28,8 +33,12 @@ async def refine(state: AgentState) -> AgentState:
         max_tokens=300,
     )
 
-    prompt_tokens, completion_tokens = add_tokens(state, usage.prompt_tokens, usage.completion_tokens)
-    new_intent = intent.model_copy(update={"retrieval_queries": refined.retrieval_queries})
+    prompt_tokens, completion_tokens = add_tokens(
+        state, usage.prompt_tokens, usage.completion_tokens
+    )
+    new_intent = intent.model_copy(
+        update={"retrieval_queries": refined.retrieval_queries}
+    )
 
     return {
         "intent": new_intent,

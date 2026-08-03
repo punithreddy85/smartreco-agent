@@ -32,18 +32,20 @@ async def _should_generate_at(now: datetime, *, force: bool = False):
     so a 200-iteration simulated timeline does not need to sleep in real time."""
     import smartreco_agent.src.tracking.gate as gate_module
 
+    # Subclassing a runtime-resolved class and reassigning a module attribute
+    # is inherently dynamic; mypy cannot type-check monkeypatching like this.
     real_datetime = gate_module.datetime
 
-    class _FrozenDatetime(real_datetime):
+    class _FrozenDatetime(real_datetime):  # type: ignore[misc,valid-type]
         @classmethod
         def now(cls, tz=None):
             return now
 
-    gate_module.datetime = _FrozenDatetime
+    gate_module.datetime = _FrozenDatetime  # type: ignore[misc]
     try:
         return await gate.should_generate(USER_ID, force=force)
     finally:
-        gate_module.datetime = real_datetime
+        gate_module.datetime = real_datetime  # type: ignore[misc]
 
 
 @pytest.mark.asyncio
@@ -67,11 +69,18 @@ async def test_trigger_policy_is_frugal(monkeypatch):
     async def fake_get_current_recommendation(_uid):
         if ctx["last_fired_hash"] is None:
             return None
-        return {"profile_hash": ctx["last_fired_hash"], "items": [{"category": "Agentic AI"}]}
+        return {
+            "profile_hash": ctx["last_fired_hash"],
+            "items": [{"category": "Agentic AI"}],
+        }
 
-    monkeypatch.setattr(gate.catalog, "get_profile", AsyncMock(side_effect=fake_get_profile))
     monkeypatch.setattr(
-        gate.catalog, "get_current_recommendation", AsyncMock(side_effect=fake_get_current_recommendation)
+        gate.catalog, "get_profile", AsyncMock(side_effect=fake_get_profile)
+    )
+    monkeypatch.setattr(
+        gate.catalog,
+        "get_current_recommendation",
+        AsyncMock(side_effect=fake_get_current_recommendation),
     )
 
     fired = 0
@@ -80,14 +89,18 @@ async def test_trigger_policy_is_frugal(monkeypatch):
         now += interval
         state["events_since_gen"] += 1
         key = next(iter(state["weights"]), "category:Agentic AI")
-        state["weights"][key] = state["weights"].get(key, 0.0) + 0.05  # every event nudges the interest weight
+        state["weights"][key] = (
+            state["weights"].get(key, 0.0) + 0.05
+        )  # every event nudges the interest weight
 
         if i == 60:
             state["interest_vector"] = _unit_vector(1)  # a real behavioural drift
         if i == 130:
             state["weights"] = {"category:Data Engineering": 5.0}  # a category pivot
 
-        state["profile_hash"] = f"h-{i}"  # a distinct hash every batch, like a live weight update
+        state["profile_hash"] = (
+            f"h-{i}"  # a distinct hash every batch, like a live weight update
+        )
 
         reason = await _should_generate_at(now)
         if reason:
@@ -97,7 +110,9 @@ async def test_trigger_policy_is_frugal(monkeypatch):
             state["last_generated_at"] = now
             state["events_since_gen"] = 0
 
-    assert 4 <= fired <= 8, f"expected a frugal 4-8 generations across 200 events, got {fired}"
+    assert 4 <= fired <= 8, (
+        f"expected a frugal 4-8 generations across 200 events, got {fired}"
+    )
 
 
 @pytest.mark.asyncio
@@ -114,7 +129,9 @@ async def test_cooldown_blocks_even_a_forced_refresh(monkeypatch):
         "weights": {},
     }
     monkeypatch.setattr(gate.catalog, "get_profile", AsyncMock(return_value=profile))
-    monkeypatch.setattr(gate.catalog, "get_current_recommendation", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        gate.catalog, "get_current_recommendation", AsyncMock(return_value=None)
+    )
 
     reason = await _should_generate_at(now, force=True)
 

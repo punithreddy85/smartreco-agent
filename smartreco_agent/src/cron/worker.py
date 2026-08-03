@@ -46,7 +46,9 @@ async def run_digest_worker(limit: int = 25) -> DigestReport:
             user = await catalog.get_user_by_id(user_id)
             if user:
                 sent = await send_digest_email(
-                    to_email=user["email"], narrative=rec["narrative"], items=rec.get("items", []),
+                    to_email=user["email"],
+                    narrative=rec["narrative"],
+                    items=rec.get("items", []),
                 )
                 report.sent += int(sent)
             await catalog.mark_digest_done(user_id)

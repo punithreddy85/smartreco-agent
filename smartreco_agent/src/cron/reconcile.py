@@ -25,9 +25,13 @@ async def reconcile() -> ReconcileReport:
     sql_hashes = await catalog.all_product_hashes()
     vec_hashes = await store.all_hashes()
 
-    missing = sql_hashes.keys() - vec_hashes.keys()          # never embedded
-    stale = {k for k in sql_hashes.keys() & vec_hashes.keys() if sql_hashes[k] != vec_hashes[k]}
-    orphans = vec_hashes.keys() - sql_hashes.keys()           # deleted, not purged
+    missing = sql_hashes.keys() - vec_hashes.keys()  # never embedded
+    stale = {
+        k
+        for k in sql_hashes.keys() & vec_hashes.keys()
+        if sql_hashes[k] != vec_hashes[k]
+    }
+    orphans = vec_hashes.keys() - sql_hashes.keys()  # deleted, not purged
 
     await outbox.enqueue_many(list(missing | stale), op="upsert")
     await outbox.enqueue_many(list(orphans), op="delete")

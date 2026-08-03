@@ -64,7 +64,9 @@ def main() -> None:
     try:
         validate_and_initialize_config()
 
-        logger.info(f"Starting SmartReco Agent server on {settings.AGENT_HOST}:{settings.AGENT_PORT}")
+        logger.info(
+            f"Starting SmartReco Agent server on {settings.AGENT_HOST}:{settings.AGENT_PORT}"
+        )
 
         uvicorn.run(
             app=app,
