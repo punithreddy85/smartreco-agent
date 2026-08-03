@@ -1,6 +1,11 @@
 .PHONY: install local test lint clean container up down logs seed demo seed-local demo-local \
         cron-digest cron-digest-worker cron-outbox cron-reconcile migrate
 
+# Single source of truth for the port: read AGENT_PORT out of .env (same value
+# settings.py picks up), so changing .env is enough - no need to edit targets.
+AGENT_PORT := $(shell grep -m1 '^AGENT_PORT=' .env 2>/dev/null | cut -d= -f2)
+AGENT_PORT := $(if $(AGENT_PORT),$(AGENT_PORT),8000)
+
 # --- Local (host) development ---
 
 install:
@@ -14,7 +19,7 @@ install:
 # `make db` (local Postgres on localhost:5432) or a Supabase connection string.
 local:
 	@test -f .env || (echo "Creating .env from .env.example..." && cp .env.example .env)
-	@. .venv/bin/activate && uvicorn smartreco_agent.src.api:app --host 0.0.0.0 --port 8000 --reload
+	@. .venv/bin/activate && uvicorn smartreco_agent.src.api:app --host 0.0.0.0 --port $(AGENT_PORT) --reload
 
 # Run seed/demo scripts directly against whatever DATABASE_URL is in .env -
 # use these (not `make seed`/`make demo`) when not running the app via Docker Compose.
@@ -41,8 +46,8 @@ clean:
 up:
 	docker compose up --build -d
 	@echo "Waiting for the app to become healthy..."
-	@until curl -sf http://localhost:8000/health > /dev/null; do sleep 1; done
-	@echo "SmartReco is up: http://localhost:8000"
+	@until curl -sf http://localhost:$(AGENT_PORT)/health > /dev/null; do sleep 1; done
+	@echo "SmartReco is up: http://localhost:$(AGENT_PORT)"
 
 down:
 	docker compose down
@@ -69,13 +74,13 @@ demo:
 CRON_SECRET ?= dev-cron-secret-change-me
 
 cron-digest:
-	curl -sX POST localhost:8000/api/cron/digest -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
+	curl -sX POST localhost:$(AGENT_PORT)/api/cron/digest -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
 
 cron-digest-worker:
-	curl -sX POST localhost:8000/api/cron/digest-worker -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
+	curl -sX POST localhost:$(AGENT_PORT)/api/cron/digest-worker -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
 
 cron-outbox:
-	curl -sX POST localhost:8000/api/cron/outbox -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
+	curl -sX POST localhost:$(AGENT_PORT)/api/cron/outbox -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
 
 cron-reconcile:
-	curl -sX POST localhost:8000/api/cron/reconcile -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
+	curl -sX POST localhost:$(AGENT_PORT)/api/cron/reconcile -H "x-cron-secret: $(CRON_SECRET)" | python3 -m json.tool
