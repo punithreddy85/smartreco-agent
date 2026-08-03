@@ -1,57 +1,51 @@
+# Local development and reviewer reproducibility (ARCHITECTURE.md §12.3).
+# In production the same code runs on Vercel against Supabase Postgres instead -
+# this compose file exists so a reviewer needs nothing but Docker + a Mesh API key.
 services:
-  pgvector:
-    image: ankane/pgvector
-    container_name: smartreco-agent-pgvector
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: smartreco-db
     environment:
-      POSTGRES_DB: pgvector
-      POSTGRES_USER: pgvector
-      POSTGRES_PASSWORD: pgvector
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smartreco
     ports:
       - "5432:5432"
     volumes:
-      - pgvector_data:/var/lib/postgresql/data
-    restart: always
+      - pgdata:/var/lib/postgresql/data
+      # Plain .sql files here are run once, in filename order, on first init only.
+      - ./migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pgvector -d pgvector"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
       timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - smartreco-network
+      retries: 10
 
-  smartreco-agent:
+  app:
     build:
       context: .
       dockerfile: Containerfile
-    container_name: smartreco-agent
-    ports:
-      - "8081:8081"
+    container_name: smartreco-app
     env_file:
       - .env
     environment:
-      - AGENT_PORT=8081
-      - POSTGRES_HOST=pgvector
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=pgvector
-      - POSTGRES_USER=pgvector
-      - POSTGRES_PASSWORD=pgvector
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/smartreco
+      DB_DISABLE_PREPARE: "false"
+      APP_BASE_URL: http://localhost:8000
+    ports:
+      - "8000:8000"
     depends_on:
-      pgvector:
+      db:
         condition: service_healthy
-    restart: always
+    command: uvicorn smartreco_agent.src.api:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./smartreco_agent:/app/smartreco_agent
+      - ./scripts:/app/scripts
     healthcheck:
-      test: [ "CMD", "curl", "-f", "-k", "http://0.0.0.0:8081/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - smartreco-network
 
 volumes:
-  pgvector_data:
-    driver: local
-
-networks:
-  smartreco-network:
-    driver: bridge
+  pgdata:

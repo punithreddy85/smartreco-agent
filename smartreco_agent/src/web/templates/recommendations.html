@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}For You — SmartReco{% endblock %}
+{% block content %}
+  <h1>For you</h1>
+
+  {% if request.query_params.get('refreshing') %}
+    <p class="banner">Refreshing your recommendations based on recent activity — reload in a few seconds.</p>
+  {% endif %}
+
+  {% if rec %}
+    <section class="narrative-card">
+      <p>{{ rec.narrative }}</p>
+      <p class="muted small">Generated because: {{ rec.trigger_reason }}</p>
+    </section>
+
+    <div class="card-grid">
+      {% for item in rec.items %}
+        <a class="card product-card" href="/products/{{ item.product_id }}">
+          <div class="card-badge">{{ item.level }}</div>
+          <h3>{{ item.title }}</h3>
+          <p class="muted">{{ item.category }}</p>
+          <p class="reason">{{ item.reason }}</p>
+          <div class="price">${{ "%.2f"|format(item.price_cents / 100) }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-state">
+      No recommendations yet — browse the <a href="/catalog">catalog</a> for a bit and SmartReco will
+      start learning what you're interested in.
+    </p>
+  {% endif %}
+
+  <form method="post" action="/recommendations/refresh">
+    <button type="submit" class="secondary">Refresh now</button>
+  </form>
+{% endblock %}

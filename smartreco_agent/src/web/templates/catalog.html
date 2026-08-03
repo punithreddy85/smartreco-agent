@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Catalog — SmartReco{% endblock %}
+{% block content %}
+  <h1>Course catalog</h1>
+
+  <form method="get" action="/catalog" class="search-bar" id="search-form">
+    <input type="search" name="q" id="search-input" placeholder="Search courses…" value="{{ q }}">
+    <select name="category" onchange="this.form.submit()">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c }}" {% if c == active_category %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Search</button>
+  </form>
+
+  {% if not products %}
+    <p class="empty-state">No courses match yet. Try a different search or category.</p>
+  {% endif %}
+
+  <div class="card-grid">
+    {% for p in products %}
+      <a class="card product-card" href="/products/{{ p.id }}" data-product-id="{{ p.id }}" data-category="{{ p.category }}">
+        <div class="card-badge">{{ p.level }}</div>
+        <h3>{{ p.title }}</h3>
+        <p class="muted">{{ p.category }}</p>
+        <p>{{ p.description[:140] }}{% if p.description|length > 140 %}…{% endif %}</p>
+        <div class="price">${{ "%.2f"|format(p.price_cents / 100) }}</div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <script>
+    document.getElementById('search-form').addEventListener('submit', function () {
+      var q = document.getElementById('search-input').value.trim();
+      if (q && window.smartreco) window.smartreco.trackSearch(q, { immediate: true });
+    });
+    document.querySelectorAll('.product-card').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (window.smartreco) window.smartreco.trackClick(el.dataset.productId);
+      });
+    });
+  </script>
+{% endblock %}

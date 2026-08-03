@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Admin · Products — SmartReco{% endblock %}
+{% block content %}
+  <div class="admin-header">
+    <h1>Products</h1>
+    <a class="primary button-link" href="/admin/products/new">+ Add product</a>
+    <a class="secondary button-link" href="/admin/observability">Observability</a>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Title</th><th>Category</th><th>Level</th><th>Price</th><th>Active</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>{{ p.title }}</td>
+        <td>{{ p.category }}</td>
+        <td>{{ p.level }}</td>
+        <td>${{ "%.2f"|format(p.price_cents / 100) }}</td>
+        <td>{{ "✓" if p.is_active else "—" }}</td>
+        <td>
+          <a href="/admin/products/{{ p.id }}/edit">Edit</a>
+          <form method="post" action="/admin/products/{{ p.id }}/delete" class="inline-form"
+                onsubmit="return confirm('Delete this product? This also removes it from the vector store.');">
+            <button type="submit" class="link-button danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

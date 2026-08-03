@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} — SmartReco{% endblock %}
+{% block content %}
+  <a href="/catalog" class="back-link">← Back to catalog</a>
+  <article class="product-detail" data-product-id="{{ product.id }}">
+    <div class="card-badge">{{ product.level }}</div>
+    <h1>{{ product.title }}</h1>
+    <p class="muted">{{ product.category }} &middot; {{ product.tags | join(', ') }}</p>
+    <p class="price large">${{ "%.2f"|format(product.price_cents / 100) }}</p>
+    <p class="description">{{ product.description }}</p>
+    <button id="add-to-cart" class="primary" {% if already_added %}disabled{% endif %}>
+      {% if already_added %}Added ✓{% else %}Add to cart{% endif %}
+    </button>
+  </article>
+
+  <script>
+    (function () {
+      var productId = {{ product.id | tojson }};
+      window.SMARTRECO_CURRENT_PRODUCT_ID = productId;
+      if (window.smartreco) window.smartreco.trackProductView(productId);
+      var btn = document.getElementById('add-to-cart');
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        if (window.smartreco) window.smartreco.trackAddToCart(productId);
+        btn.textContent = 'Added ✓';
+        btn.disabled = true;
+      });
+    })();
+  </script>
+{% endblock %}

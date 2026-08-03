@@ -41,6 +41,26 @@ class AppExceptionCode(Enum):
         "Internal Server Error",
         "E_009",
     )
+    MESH_BALANCE_ERROR = (
+        HTTP_500_INTERNAL_SERVER_ERROR,
+        "AI provider balance exhausted",
+        "E_010",
+    )
+    MESH_PARSE_ERROR = (
+        HTTP_500_INTERNAL_SERVER_ERROR,
+        "AI provider returned an unparsable response",
+        "E_011",
+    )
+    GROUNDING_VIOLATION_ERROR = (
+        HTTP_500_INTERNAL_SERVER_ERROR,
+        "Generated content referenced a product outside the retrieved set",
+        "E_012",
+    )
+    CONFLICT_ERROR = (
+        409,
+        "Conflict",
+        "E_013",
+    )
 
     def __init__(self, response_code: str, message: str, error_code: str):
         """Constructor to initialize the exception code with response_code, message, and error_code."""

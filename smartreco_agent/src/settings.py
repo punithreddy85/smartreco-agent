@@ -1,8 +1,8 @@
 """Settings configuration for the SmartReco Agent.
 
-This module provides centralized configuration management using Pydantic
-BaseSettings for environment variable loading, validation, and default
-value handling for the SmartReco Agent service.
+Centralised configuration using Pydantic BaseSettings. Every credential is
+read from the environment; nothing is ever hard-coded, logged, or rendered
+into a template.
 """
 
 from typing import Optional
@@ -17,228 +17,118 @@ from smartreco_agent.src.core.exceptions.exceptions import (
 )
 from smartreco_agent.utils.pylogger import get_python_logger
 
-# Initialize logger
 logger = get_python_logger()
 
-# Load environment variables with error handling
 try:
     load_dotenv()
-except Exception as e:
-    # Log error but don't fail - environment variables might be set directly
+except Exception as e:  # pragma: no cover - defensive only
     logger.warning(f"Could not load .env file: {e}")
 
 
 class Settings(BaseSettings):
-    """Configuration settings for the SmartReco Agent.
+    """Configuration settings for the SmartReco Agent."""
 
-    Uses Pydantic BaseSettings to load and validate configuration from
-    environment variables. Provides default values for optional settings
-    and validation for required ones.
-
-    The settings are organized into logical groups:
-    - Server Configuration: Host, port, SSL settings
-    - Database Configuration: PostgreSQL connection parameters
-    - Langfuse Configuration: Tracing and analytics settings
-    - Google Configuration: Service account credentials
-    - MCP Configuration: MCP server connection settings
-    """
-
-    # Server Configuration
+    # --- Server ---
     AGENT_HOST: str = Field(default="0.0.0.0", json_schema_extra={"env": "AGENT_HOST"})
-    AGENT_PORT: int = Field(default=8081, json_schema_extra={"env": "AGENT_PORT"})
-    AGENT_SSL_KEYFILE: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "AGENT_SSL_KEYFILE"}
-    )
-    AGENT_SSL_CERTFILE: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "AGENT_SSL_CERTFILE"}
-    )
+    AGENT_PORT: int = Field(default=8000, json_schema_extra={"env": "AGENT_PORT"})
     PYTHON_LOG_LEVEL: str = Field(
         default="INFO", json_schema_extra={"env": "PYTHON_LOG_LEVEL"}
     )
-    USE_INMEMORY_SAVER: bool = Field(
-        default=False, json_schema_extra={"env": "USE_INMEMORY_SAVER"}
+    APP_BASE_URL: str = Field(
+        default="http://localhost:8000",
+        json_schema_extra={"env": "APP_BASE_URL"},
+        description="Used to build absolute links (emails, pg_cron job definitions).",
     )
 
-    # Local OpenAI-compatible LLM (RamaLama, Ollama, vLLM): set USE_OPENAI_COMPAT_LLM=true
-    # and OPENAI_COMPAT_BASE_URL. Default false = Google Gemini + GOOGLE_APPLICATION_CREDENTIALS_CONTENT.
-    USE_OPENAI_COMPAT_LLM: bool = Field(
+    # --- Database (Supabase Postgres, transaction pooler in production) ---
+    DATABASE_URL: str = Field(
+        default="postgresql://postgres:postgres@localhost:5432/smartreco",
+        json_schema_extra={"env": "DATABASE_URL"},
+    )
+    DB_DISABLE_PREPARE: bool = Field(
         default=False,
-        json_schema_extra={"env": "USE_OPENAI_COMPAT_LLM"},
+        json_schema_extra={"env": "DB_DISABLE_PREPARE"},
+        description="Must be true against the Supabase transaction pooler (port 6543), "
+        "which does not support prepared statements. False for a direct local connection.",
     )
-    OPENAI_COMPAT_BASE_URL: Optional[str] = Field(
-        default=None,
-        json_schema_extra={"env": "OPENAI_COMPAT_BASE_URL"},
+    DB_POOL_MIN_SIZE: int = Field(
+        default=1, json_schema_extra={"env": "DB_POOL_MIN_SIZE"}
     )
-    OPENAI_COMPAT_API_KEY: str = Field(
-        default="not-needed",
-        json_schema_extra={"env": "OPENAI_COMPAT_API_KEY"},
-    )
-    OPENAI_COMPAT_MODEL: str = Field(
-        default="local",
-        json_schema_extra={"env": "OPENAI_COMPAT_MODEL"},
+    DB_POOL_MAX_SIZE: int = Field(
+        default=10, json_schema_extra={"env": "DB_POOL_MAX_SIZE"}
     )
 
-    # Database Configuration
-    POSTGRES_USER: str = Field(
-        default="pgvector", json_schema_extra={"env": "POSTGRES_USER"}
+    # --- Mesh API (mandatory gateway for every LLM / embedding call) ---
+    MESH_API_KEY: str = Field(default="", json_schema_extra={"env": "MESH_API_KEY"})
+    MESH_BASE_URL: str = Field(
+        default="https://api.meshapi.ai/v1",
+        json_schema_extra={"env": "MESH_BASE_URL"},
     )
-    POSTGRES_PASSWORD: str = Field(
-        default="pgvector", json_schema_extra={"env": "POSTGRES_PASSWORD"}
+    MESH_CHAT_MODEL: str = Field(
+        default="google/gemini-3-flash-preview",
+        json_schema_extra={"env": "MESH_CHAT_MODEL"},
     )
-    POSTGRES_DB: str = Field(
-        default="pgvector", json_schema_extra={"env": "POSTGRES_DB"}
+    MESH_CHEAP_MODEL: str = Field(
+        default="google/gemini-3-flash-preview",
+        json_schema_extra={"env": "MESH_CHEAP_MODEL"},
     )
-    POSTGRES_HOST: str = Field(
-        default="pgvector", json_schema_extra={"env": "POSTGRES_HOST"}
+    MESH_EMBED_MODEL: str = Field(
+        default="qwen/text-embedding-v4",
+        json_schema_extra={"env": "MESH_EMBED_MODEL"},
     )
-    POSTGRES_PORT: int = Field(default=5432, json_schema_extra={"env": "POSTGRES_PORT"})
-
-    # Google Service Account Configuration
-    GOOGLE_SERVICE_ACCOUNT_FILE: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "GOOGLE_SERVICE_ACCOUNT_FILE"}
-    )
-
-    # Langfuse Configuration
-    LANGFUSE_PUBLIC_KEY: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "LANGFUSE_PUBLIC_KEY"}
-    )
-    LANGFUSE_SECRET_KEY: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "LANGFUSE_SECRET_KEY"}
-    )
-    LANGFUSE_BASE_URL: Optional[str] = Field(
-        default=None, json_schema_extra={"env": "LANGFUSE_BASE_URL"}
-    )
-    LANGFUSE_TRACING_ENVIRONMENT: str = Field(
-        default="development", json_schema_extra={"env": "LANGFUSE_TRACING_ENVIRONMENT"}
+    MESH_EMBED_DIMENSIONS: int = Field(
+        default=1536, json_schema_extra={"env": "MESH_EMBED_DIMENSIONS"}
     )
 
-    # Google Application Credentials
-    GOOGLE_APPLICATION_CREDENTIALS_CONTENT: Optional[str] = Field(
-        default=None,
-        json_schema_extra={"env": "GOOGLE_APPLICATION_CREDENTIALS_CONTENT"},
+    # --- Auth / sessions ---
+    SESSION_SECRET: str = Field(
+        default="dev-secret-change-me", json_schema_extra={"env": "SESSION_SECRET"}
+    )
+    SESSION_COOKIE_NAME: str = Field(default="smartreco_session")
+    SESSION_MAX_AGE_SECONDS: int = Field(default=60 * 60 * 24 * 14)  # 14 days
+
+    # --- Cron ---
+    CRON_SECRET: str = Field(
+        default="dev-cron-secret-change-me", json_schema_extra={"env": "CRON_SECRET"}
     )
 
-    # MCP Server Configuration
-    MCP_SERVER_NAME: str = Field(
-        default="my-mcp-server",
-        json_schema_extra={"env": "MCP_SERVER_NAME"},
+    # --- Email (scheduled digest bonus) ---
+    RESEND_API_KEY: Optional[str] = Field(
+        default=None, json_schema_extra={"env": "RESEND_API_KEY"}
     )
-    MCP_SERVER_URL: str = Field(
-        default="http://localhost:5001/mcp/",
-        json_schema_extra={"env": "MCP_SERVER_URL"},
-    )
-    MCP_TRANSPORT_PROTOCOL: str = Field(
-        default="streamable_http",
-        json_schema_extra={"env": "MCP_TRANSPORT_PROTOCOL"},
-    )
-    MCP_CONNECTION_TIMEOUT: int = Field(
-        default=30,
-        json_schema_extra={"env": "MCP_CONNECTION_TIMEOUT"},
-    )
-    MCP_SSL_VERIFY: bool = Field(
-        default=False,
-        json_schema_extra={
-            "env": "MCP_SSL_VERIFY",
-            "description": "Enable SSL certificate verification for MCP connections",
-        },
+    RESEND_FROM_EMAIL: str = Field(
+        default="SmartReco <onboarding@resend.dev>",
+        json_schema_extra={"env": "RESEND_FROM_EMAIL"},
     )
 
-    # Request Logging Configuration
-    REQUEST_LOGGING_ENABLED: bool = Field(
-        default=True,
-        json_schema_extra={
-            "env": "REQUEST_LOGGING_ENABLED",
-            "description": "Enable request/response logging",
-        },
-    )
-    REQUEST_LOG_HEADERS: bool = Field(
-        default=True,
-        json_schema_extra={
-            "env": "REQUEST_LOG_HEADERS",
-            "description": "Include headers in request/response logs",
-        },
-    )
-    REQUEST_LOG_BODY: bool = Field(
-        default=False,
-        json_schema_extra={
-            "env": "REQUEST_LOG_BODY",
-            "description": "Include body content in request/response logs",
-        },
-    )
-    REQUEST_LOG_BODY_MAX_SIZE: int = Field(
-        default=10240,
-        json_schema_extra={
-            "env": "REQUEST_LOG_BODY_MAX_SIZE",
-            "description": "Maximum body size in bytes to log (0 for unlimited)",
-        },
-    )
+    # --- Request logging ---
+    REQUEST_LOGGING_ENABLED: bool = Field(default=True)
 
     @property
-    def database_uri(self) -> str:
-        """Generate database URI from individual components.
-
-        Constructs a PostgreSQL connection URI using the configured
-        database settings including user, password, host, port, and
-        database name.
-
-        Returns:
-            The complete PostgreSQL database URI string.
-        """
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-
-    @property
-    def use_openai_compatible_llm(self) -> bool:
-        """OpenAI-compatible stack only when explicitly enabled and base URL is set."""
-        if not self.USE_OPENAI_COMPAT_LLM:
-            return False
-        return bool((self.OPENAI_COMPAT_BASE_URL or "").strip())
+    def use_transaction_pooler(self) -> bool:
+        """Whether the configured DATABASE_URL looks like a pooled connection."""
+        return ":6543" in self.DATABASE_URL
 
 
 def validate_config(settings: Settings) -> None:
-    """Validate configuration settings.
-
-    Performs comprehensive validation to ensure required settings are
-    present and values are within acceptable ranges. This function
-    validates port ranges, log levels, and transport protocols.
-
-    Args:
-        settings: Settings instance to validate.
-
-    Raises:
-        ValueError: If required configuration is missing or invalid.
-    """
-    # Validate port range
+    """Validate configuration settings that must hold before serving traffic."""
     if not (1024 <= settings.AGENT_PORT <= 65535):
-        logger.error(
-            f"AGENT_PORT must be between 1024 and 65535, got {settings.AGENT_PORT}"
-        )
         raise AppException(
             f"AGENT_PORT must be between 1024 and 65535, got {settings.AGENT_PORT}",
             AppExceptionCode.CONFIGURATION_VALIDATION_ERROR,
         )
 
-    # Validate log level
     valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     if settings.PYTHON_LOG_LEVEL.upper() not in valid_log_levels:
-        logger.error(
-            f"PYTHON_LOG_LEVEL must be one of {valid_log_levels}, got {settings.PYTHON_LOG_LEVEL}"
-        )
         raise AppException(
             f"PYTHON_LOG_LEVEL must be one of {valid_log_levels}, got {settings.PYTHON_LOG_LEVEL}",
             AppExceptionCode.CONFIGURATION_VALIDATION_ERROR,
         )
 
-    if (
-        settings.USE_OPENAI_COMPAT_LLM
-        and not (settings.OPENAI_COMPAT_BASE_URL or "").strip()
-    ):
-        msg = "OPENAI_COMPAT_BASE_URL is required when USE_OPENAI_COMPAT_LLM=true"
-        logger.error(msg)
-        raise AppException(
-            msg,
-            AppExceptionCode.CONFIGURATION_VALIDATION_ERROR,
+    if not settings.MESH_API_KEY:
+        logger.warning(
+            "MESH_API_KEY is not set - all agent generation and embedding calls will fail"
         )
 
 
-# Create settings instance without validation (validation happens in main.py)
 settings = Settings()

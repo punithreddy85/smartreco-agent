@@ -1,167 +1,58 @@
-"""Schema definitions for the SmartReco Agent.
+"""Request/response models shared across routes.
 
-This module contains Pydantic models and TypedDict definitions for
-request/response validation, data serialization, and API documentation
-for the SmartReco Agent service.
+Agent structured-output schemas (Mesh `response_format` contracts) live in
+`smartreco_agent/src/agent/schemas.py` instead, since they are tightly coupled
+to the LangGraph nodes that consume them.
 """
 
-from typing import Any, Literal, NotRequired
+from __future__ import annotations
 
-from pydantic import BaseModel, Field
-from typing_extensions import TypedDict
+from datetime import datetime
+from typing import Any, Literal, Optional
+from uuid import UUID
 
+from pydantic import BaseModel, EmailStr, Field
 
-class UserInput(BaseModel):
-    """Basic user input model for agent interactions.
-
-    This model represents the core user input structure used across
-    different endpoints in the SmartReco Agent API.
-    """
-
-    message: str = Field(
-        description="User input message to be processed by the agent.",
-        examples=["What is 2 multiplied by 3?"],
-    )
-    thread_id: str | None = Field(
-        description="Thread ID to persist and continue a multi-turn conversation. Auto-generated if not provided.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    session_id: str | None = Field(
-        description="Session ID to persist and continue a conversation across multiple threads.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    user_id: str | None = Field(
-        description="User ID to persist and continue a conversation across multiple threads.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
+EventType = Literal[
+    "page_view", "product_view", "search", "click", "dwell", "add_to_cart", "dismiss", "scroll"
+]
 
 
-class StreamRequest(UserInput):
-    """User input model for streaming agent responses.
-
-    Extends UserInput with streaming-specific configuration options
-    for real-time response generation.
-    """
-
-    stream_tokens: bool = Field(
-        description="Whether to stream LLM tokens to the client in real-time.",
-        default=True,
-    )
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
 
 
-class ToolCall(TypedDict):
-    """Represents a request to call a tool.
-
-    This TypedDict defines the structure for tool call requests,
-    including the tool name, arguments, and optional identifier.
-    """
-
-    name: str
-    """The name of the tool to be called."""
-    args: dict[str, Any]
-    """The arguments to pass to the tool call."""
-    id: str | None
-    """An optional identifier associated with the tool call."""
-    type: NotRequired[Literal["tool_call"]]
-    """The type identifier for tool calls."""
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
-class ChatMessage(BaseModel):
-    """Message model for chat conversations.
-
-    This model represents individual messages in a chat conversation,
-    supporting different message types and metadata.
-    """
-
-    type: Literal["human", "ai", "tool", "custom"] = Field(
-        description="The role or type of the message in the conversation.",
-        examples=["human", "ai", "tool", "custom"],
-    )
-    content: str = Field(
-        description="The text content of the message.",
-        examples=["Hello, world!"],
-    )
-    tool_calls: list[ToolCall] = Field(
-        description="Tool calls included in this message.",
-        default=[],
-    )
-    tool_call_id: str | None = Field(
-        description="ID of the tool call that this message is responding to.",
-        default=None,
-        examples=["call_Jja7J89XsjrOLA5r!MEOW!SL"],
-    )
-    run_id: str | None = Field(
-        description="Run ID associated with this message for tracking.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    thread_id: str | None = Field(
-        description="Thread ID associated with this message for conversation tracking.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    session_id: str | None = Field(
-        description="Session ID associated with this message for session tracking.",
-        default=None,
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    ai_call_id: str | None = Field(
-        description="Unique identifier for the AI call that generated this message.",
-        default=None,
-        examples=["ai_call_847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    response_metadata: dict[str, Any] = Field(
-        description="Additional metadata for the response, such as headers, logprobs, or token counts.",
-        default={},
-    )
-    custom_data: dict[str, Any] = Field(
-        description="Custom data associated with this message.",
-        default={},
-    )
+class ProductIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(min_length=1)
+    category: str = Field(min_length=1, max_length=80)
+    level: Literal["beginner", "intermediate", "advanced"]
+    price_cents: int = Field(ge=0)
+    tags: list[str] = Field(default_factory=list)
+    is_active: bool = True
 
 
-class FeedbackRequest(BaseModel):
-    """Feedback model for recording user feedback to LangFuse.
-
-    This model represents feedback data that can be recorded to
-    LangFuse for analytics and monitoring purposes.
-    """
-
-    run_id: str = Field(
-        description="Run ID to record feedback for.",
-        examples=["847c6285-8fc9-4560-a83f-4e6285809254"],
-    )
-    key: str = Field(
-        description="Feedback key identifier.",
-        examples=["human-feedback-stars"],
-    )
-    score: float = Field(
-        description="Feedback score value.",
-        examples=[0.8],
-    )
-    kwargs: dict[str, Any] = Field(
-        description="Additional feedback parameters passed to LangFuse.",
-        default={},
-        examples=[{"comment": "In-line human feedback"}],
-    )
+class EventIn(BaseModel):
+    event_id: UUID
+    type: EventType
+    product_id: Optional[UUID] = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+    occurred_at: datetime
 
 
-class FeedbackResponse(BaseModel):
-    """Response model for feedback operations.
+class EventBatch(BaseModel):
+    """Capped at 50 events and rate-limited per user - a hostile client cannot
+    inflate its own interest model unboundedly (ARCHITECTURE.md \u00a713)."""
 
-    Simple response model indicating successful feedback recording.
-    """
-
-    status: Literal["success"] = "success"
+    session_id: UUID
+    events: list[EventIn] = Field(min_length=1, max_length=50)
 
 
-class ChatHistoryResponse(BaseModel):
-    """Response model for chat history requests.
-
-    Contains a list of chat messages representing the conversation history.
-    """
-
-    messages: list[ChatMessage]
+class IngestResponse(BaseModel):
+    accepted: int

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SmartReco{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  {% if request.state.user %}
+    <script>
+      window.SMARTRECO_USER_ID = {{ request.state.user.id | tojson }};
+    </script>
+    <script src="/static/tracker.js"></script>
+  {% endif %}
+
+  <header class="topbar">
+    <a class="brand" href="/">SmartReco</a>
+    <nav>
+      <a href="/catalog">Catalog</a>
+      <a href="/recommendations">For You</a>
+      {% if request.state.user and request.state.user.is_admin %}
+        <a href="/admin/products">Admin</a>
+      {% endif %}
+    </nav>
+    <div class="spacer"></div>
+    {% if request.state.user %}
+      <form action="/logout" method="post" class="inline-form">
+        <button type="submit" class="link-button">Log out</button>
+      </form>
+    {% else %}
+      <a href="/login">Log in</a>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

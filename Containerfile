@@ -1,38 +1,27 @@
-FROM registry.access.redhat.com/ubi9/python-312:latest
+# Local development + reviewer reproducibility only (ARCHITECTURE.md §12.3).
+# Vercel does not build or run this file - it deploys the same ASGI app as
+# serverless functions directly from source (see api/index.py, vercel.json).
+FROM python:3.12-slim
 
-# --------------------------------------------------------------------------------------------------
-# set the working directory to /app
-# --------------------------------------------------------------------------------------------------
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# --------------------------------------------------------------------------------------------------
-# Copy manifest files and install python packages
-# --------------------------------------------------------------------------------------------------
+# System deps for psycopg[binary] wheels and healthchecks.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-USER root
-COPY pyproject.toml /app/pyproject.toml
-RUN pip install uv
-RUN uv venv
-RUN source /app/.venv/bin/activate
-RUN uv pip install -r pyproject.toml
-USER default
+COPY pyproject.toml README.md ./
+COPY smartreco_agent ./smartreco_agent
+RUN pip install --no-cache-dir .
 
-# --------------------------------------------------------------------------------------------------
-# copy source code and files
-# --------------------------------------------------------------------------------------------------
+COPY migrations ./migrations
+COPY scripts ./scripts
 
-COPY smartreco_agent /app/smartreco_agent
+RUN useradd --create-home --uid 1001 appuser && chown -R appuser /app
+USER appuser
 
-# --------------------------------------------------------------------------------------------------
-# Set PYTHONPATH to include /app
-# --------------------------------------------------------------------------------------------------
-
-ENV PYTHONPATH=/app
-
-
-# --------------------------------------------------------------------------------------------------
-# add entrypoint for the container
-# --------------------------------------------------------------------------------------------------
-
-CMD ["/app/.venv/bin/python", "-m", "smartreco_agent.src.main"]
+EXPOSE 8000
+CMD ["uvicorn", "smartreco_agent.src.api:app", "--host", "0.0.0.0", "--port", "8000"]

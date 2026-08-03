@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Admin · Observability — SmartReco{% endblock %}
+{% block content %}
+  <div class="admin-header">
+    <h1>Agent observability</h1>
+    <a class="secondary button-link" href="/admin/products">← Products</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><span class="stat-value">{{ total }}</span><span class="stat-label">runs (last 50)</span></div>
+    <div class="stat"><span class="stat-value">{{ generations }}</span><span class="stat-label">real generations</span></div>
+    <div class="stat"><span class="stat-value">{{ cache_hits }}</span><span class="stat-label">cache hits</span></div>
+    <div class="stat"><span class="stat-value">{{ errors }}</span><span class="stat-label">errors</span></div>
+    <div class="stat"><span class="stat-value">{{ total_prompt_tokens + total_completion_tokens }}</span><span class="stat-label">tokens used</span></div>
+  </div>
+
+  <p class="muted">
+    This table is the evidence for the trigger policy's frugality claim: most events should produce
+    no row at all here, because the gate in <code>tracking/gate.py</code> filtered them out before any
+    Mesh call was made.
+  </p>
+
+  <form method="post" action="/admin/reconcile" class="inline-form" style="margin-bottom:1rem;">
+    <button type="submit" class="secondary">Run reconcile + drain now</button>
+  </form>
+  {% if request.query_params.get('missing') is not none %}
+    <p class="banner">
+      Reconcile: {{ request.query_params.get('missing') }} missing,
+      {{ request.query_params.get('stale') }} stale,
+      {{ request.query_params.get('orphans') }} orphaned embeddings re-enqueued.
+    </p>
+  {% endif %}
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>When</th><th>User</th><th>Trigger</th><th>Cache hit</th><th>Refine loops</th>
+        <th>Retrieved</th><th>Tokens</th><th>Error</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr class="{{ 'row-error' if r.error else '' }}">
+        <td>{{ r.created_at }}</td>
+        <td>{{ r.user_id }}</td>
+        <td>{{ r.trigger_reason }}</td>
+        <td>{{ "✓" if r.cache_hit else "" }}</td>
+        <td>{{ r.refine_loops }}</td>
+        <td>{{ r.retrieved_ids | length }}</td>
+        <td>{{ (r.prompt_tokens or 0) + (r.completion_tokens or 0) }}</td>
+        <td>{{ r.error or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

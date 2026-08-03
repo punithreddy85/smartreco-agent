@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Admin · {{ 'Edit' if product else 'New' }} product — SmartReco{% endblock %}
+{% block content %}
+  <h1>{{ 'Edit product' if product else 'New product' }}</h1>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post" action="{{ '/admin/products/' + product.id + '/edit' if product else '/admin/products/new' }}" class="admin-form">
+    <label>Title <input type="text" name="title" required value="{{ product.title if product else '' }}"></label>
+    <label>Description <textarea name="description" rows="5" required>{{ product.description if product else '' }}</textarea></label>
+    <label>Category <input type="text" name="category" required value="{{ product.category if product else '' }}"></label>
+    <label>Level
+      <select name="level" required>
+        {% for lvl in ['beginner', 'intermediate', 'advanced'] %}
+          <option value="{{ lvl }}" {% if product and product.level == lvl %}selected{% endif %}>{{ lvl }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Price (cents) <input type="number" name="price_cents" min="0" required value="{{ product.price_cents if product else 0 }}"></label>
+    <label>Tags (comma-separated) <input type="text" name="tags" value="{{ product.tags | join(', ') if product else '' }}"></label>
+    <label class="checkbox"><input type="checkbox" name="is_active" {% if not product or product.is_active %}checked{% endif %}> Active</label>
+    <button type="submit" class="primary">{{ 'Save changes' if product else 'Create product' }}</button>
+  </form>
+{% endblock %}
