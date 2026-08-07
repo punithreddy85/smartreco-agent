@@ -92,6 +92,24 @@ class Settings(BaseSettings):
         default="dev-cron-secret-change-me", json_schema_extra={"env": "CRON_SECRET"}
     )
 
+    # --- Seed data (scripts/seed_catalog.py) ---
+    # Defaults match the ones documented in the README's local/Docker Compose quick
+    # start. They are intentionally obvious placeholders, not real secrets - but
+    # MUST be overridden via env vars before seeding a publicly reachable database
+    # (e.g. a deployed Vercel + Supabase instance), since this repo is public.
+    SEED_ADMIN_EMAIL: str = Field(
+        default="admin@smartreco.dev", json_schema_extra={"env": "SEED_ADMIN_EMAIL"}
+    )
+    SEED_ADMIN_PASSWORD: str = Field(
+        default="adminpass123", json_schema_extra={"env": "SEED_ADMIN_PASSWORD"}
+    )
+    SEED_DEMO_EMAIL: str = Field(
+        default="demo@smartreco.dev", json_schema_extra={"env": "SEED_DEMO_EMAIL"}
+    )
+    SEED_DEMO_PASSWORD: str = Field(
+        default="demopass123", json_schema_extra={"env": "SEED_DEMO_PASSWORD"}
+    )
+
     # --- Email (scheduled digest bonus) ---
     RESEND_API_KEY: Optional[str] = Field(
         default=None, json_schema_extra={"env": "RESEND_API_KEY"}

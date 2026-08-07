@@ -164,6 +164,10 @@ make local                    # uvicorn --reload against localhost:5432
 4. `git push` — Vercel builds the FastAPI app as serverless functions per `vercel.json`, routing
    every request through `api/index.py`, which just re-exports the same `smartreco_agent.src.api:app`
    that Docker Compose runs. There is no separate build or deploy path to keep in sync.
+5. Before running `scripts/seed_catalog.py` against this database, override
+   `SEED_ADMIN_PASSWORD` / `SEED_DEMO_PASSWORD` (and emails, if you like) in the Vercel/Supabase
+   environment — the `adminpass123` / `demopass123` defaults are committed to this public repo and
+   must not end up protecting a real, publicly reachable admin account.
 
 ## The trigger policy — how AI-call frugality is enforced
 
@@ -258,3 +262,8 @@ ARCHITECTURE.md              full design rationale
 - `EventBatch` is capped at 50 events and strictly validated by Pydantic; a hostile client cannot
   unboundedly inflate its own interest model.
 - The Mesh API key is never rendered, logged, or returned in an error body.
+- Seed admin/demo credentials (`scripts/seed_catalog.py`) are read from `SEED_ADMIN_EMAIL` /
+  `SEED_ADMIN_PASSWORD` / `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD` env vars, not hard-coded — the
+  `.env.example` defaults are obvious placeholders for local/Docker Compose use only and must be
+  overridden before seeding a publicly reachable (e.g. deployed) database, since this repo is
+  public.

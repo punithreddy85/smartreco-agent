@@ -26,11 +26,20 @@ from smartreco_agent.src.db.pool import (  # noqa: E402
     open_pool,
     transaction,
 )
+from smartreco_agent.src.settings import settings  # noqa: E402
 
-ADMIN_EMAIL = "admin@smartreco.dev"
-ADMIN_PASSWORD = "adminpass123"
-DEMO_EMAIL = "demo@smartreco.dev"
-DEMO_PASSWORD = "demopass123"
+# Read from env (see .env.example / settings.py) rather than hard-coding: this
+# script is committed to a public repo, so the seeded admin/demo credentials
+# must be overridable before seeding a publicly reachable (e.g. deployed)
+# database. The defaults below are only safe for local/Docker Compose use.
+ADMIN_EMAIL = settings.SEED_ADMIN_EMAIL
+ADMIN_PASSWORD = settings.SEED_ADMIN_PASSWORD
+DEMO_EMAIL = settings.SEED_DEMO_EMAIL
+DEMO_PASSWORD = settings.SEED_DEMO_PASSWORD
+
+_USING_DEFAULT_CREDS = (
+    ADMIN_PASSWORD == "adminpass123" or DEMO_PASSWORD == "demopass123"
+)
 
 # 8 categories, deliberately overlapping in vocabulary (agentic AI <-> LLM
 # engineering <-> data engineering) so the retrieval/rerank story is real.
@@ -376,6 +385,15 @@ async def _seed_products() -> int:
 
 
 async def main() -> None:
+    if _USING_DEFAULT_CREDS and settings.use_transaction_pooler:
+        print(
+            "WARNING: seeding with the default admin/demo passwords against what "
+            "looks like a remote (Supabase pooler) DATABASE_URL. These defaults are "
+            "committed to a public repo - set SEED_ADMIN_PASSWORD / SEED_DEMO_PASSWORD "
+            "in your .env before seeding a publicly reachable database.",
+            file=sys.stderr,
+        )
+
     await open_pool()
     try:
         await _seed_users()
