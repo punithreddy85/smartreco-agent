@@ -60,7 +60,9 @@ async def create_product(
     module_count: Optional[int] = Form(None),
 ):
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-    outcome_list = [line.strip() for line in learning_outcomes.splitlines() if line.strip()]
+    outcome_list = [
+        line.strip() for line in learning_outcomes.splitlines() if line.strip()
+    ]
     async with transaction() as conn:
         product = await catalog.upsert_product(
             product_id=None,
@@ -110,7 +112,9 @@ async def update_product(
     module_count: Optional[int] = Form(None),
 ):
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-    outcome_list = [line.strip() for line in learning_outcomes.splitlines() if line.strip()]
+    outcome_list = [
+        line.strip() for line in learning_outcomes.splitlines() if line.strip()
+    ]
     async with transaction() as conn:
         product = await catalog.upsert_product(
             product_id=product_id,

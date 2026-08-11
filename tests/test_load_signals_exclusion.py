@@ -28,9 +28,7 @@ def _patch_catalog(
     monkeypatch.setattr(
         catalog, "recent_events", AsyncMock(return_value=recent_events or [])
     )
-    monkeypatch.setattr(
-        catalog, "recent_search_queries", AsyncMock(return_value=[])
-    )
+    monkeypatch.setattr(catalog, "recent_search_queries", AsyncMock(return_value=[]))
     monkeypatch.setattr(
         catalog,
         "dismissed_and_owned_product_ids",

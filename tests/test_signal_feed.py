@@ -104,7 +104,12 @@ def test_search_with_blank_query_is_dropped():
 
 def test_dwell_formats_seconds_and_title():
     events = [
-        {"type": "dwell", "product_id": "p1", "payload": {"seconds": 12}, "occurred_at": NOW},
+        {
+            "type": "dwell",
+            "product_id": "p1",
+            "payload": {"seconds": 12},
+            "occurred_at": NOW,
+        },
     ]
 
     feed = humanize_events(events, PRODUCTS_BY_ID, now=NOW)
@@ -122,7 +127,12 @@ def test_dwell_formats_seconds_and_title():
 
 def test_dwell_without_product_or_path_is_dropped():
     events = [
-        {"type": "dwell", "product_id": None, "payload": {"seconds": 12}, "occurred_at": NOW}
+        {
+            "type": "dwell",
+            "product_id": None,
+            "payload": {"seconds": 12},
+            "occurred_at": NOW,
+        }
     ]
 
     assert humanize_events(events, {}, now=NOW) == []
@@ -167,7 +177,12 @@ def test_dwell_on_a_product_path_never_leaks_the_raw_id(monkeypatch=None):
 
 def test_scroll_events_are_always_hidden():
     events = [
-        {"type": "scroll", "product_id": None, "payload": {"depth_pct": 50}, "occurred_at": NOW},
+        {
+            "type": "scroll",
+            "product_id": None,
+            "payload": {"depth_pct": 50},
+            "occurred_at": NOW,
+        },
         {"type": "product_view", "product_id": "p1", "payload": {}, "occurred_at": NOW},
     ]
 
@@ -180,7 +195,12 @@ def test_scroll_events_are_always_hidden():
 def test_only_the_first_surviving_entry_is_flagged_latest():
     events = [
         {"type": "product_view", "product_id": "p1", "payload": {}, "occurred_at": NOW},
-        {"type": "scroll", "product_id": None, "payload": {}, "occurred_at": NOW},  # dropped
+        {
+            "type": "scroll",
+            "product_id": None,
+            "payload": {},
+            "occurred_at": NOW,
+        },  # dropped
         {"type": "click", "product_id": "p1", "payload": {}, "occurred_at": _ago(120)},
     ]
 
@@ -191,7 +211,12 @@ def test_only_the_first_surviving_entry_is_flagged_latest():
 
 def test_event_with_unresolvable_product_is_dropped():
     events = [
-        {"type": "product_view", "product_id": "unknown", "payload": {}, "occurred_at": NOW}
+        {
+            "type": "product_view",
+            "product_id": "unknown",
+            "payload": {},
+            "occurred_at": NOW,
+        }
     ]
 
     assert humanize_events(events, PRODUCTS_BY_ID, now=NOW) == []
@@ -231,8 +256,18 @@ def test_duplicate_collapse_respects_the_five_minute_window():
 
 def test_dwells_with_different_durations_are_not_collapsed():
     events = [
-        {"type": "dwell", "product_id": "p1", "payload": {"seconds": 30}, "occurred_at": NOW},
-        {"type": "dwell", "product_id": "p1", "payload": {"seconds": 8}, "occurred_at": _ago(5)},
+        {
+            "type": "dwell",
+            "product_id": "p1",
+            "payload": {"seconds": 30},
+            "occurred_at": NOW,
+        },
+        {
+            "type": "dwell",
+            "product_id": "p1",
+            "payload": {"seconds": 8},
+            "occurred_at": _ago(5),
+        },
     ]
 
     feed = humanize_events(events, PRODUCTS_BY_ID, now=NOW)

@@ -57,6 +57,7 @@ def trigger_reason_label(trigger_reason: str | None) -> str | None:
         return None
     return _TRIGGER_LABELS.get(trigger_reason, trigger_reason)
 
+
 # Runs of the same (label, detail) within this window collapse into one row
 # with a `xN` suffix (P0.3). Grouping on the *rendered* text rather than the
 # raw (type, product_id) pair means a dwell with a different duration, or a
@@ -192,7 +193,9 @@ def humanize_events(
                 feed[-1]["detail"] = f"{detail} \u00d7{group['count']}"
                 continue
 
-        groups.append({"label": label, "detail": detail, "newest_at": occurred_at, "count": 1})
+        groups.append(
+            {"label": label, "detail": detail, "newest_at": occurred_at, "count": 1}
+        )
         feed.append(
             {
                 "label": label,

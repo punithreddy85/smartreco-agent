@@ -51,7 +51,9 @@ def _serialize_recommendation(
             for item in rec.get("items", [])[:2]
         ],
         trigger_reason=rec.get("trigger_reason"),
-        refreshed_at=relative_time(rec["created_at"], now) if rec.get("created_at") else None,
+        refreshed_at=relative_time(rec["created_at"], now)
+        if rec.get("created_at")
+        else None,
     )
 
 
@@ -89,5 +91,7 @@ async def live_signal(
         recommendation=_serialize_recommendation(rec, now=now),
         events_since_gen=events_since_gen,
         trigger_threshold=trigger_threshold,
-        top_interests=[InterestWeight(**w) for w in top_interests((profile or {}).get("weights"))],
+        top_interests=[
+            InterestWeight(**w) for w in top_interests((profile or {}).get("weights"))
+        ],
     )
