@@ -43,6 +43,9 @@ class ProductIn(BaseModel):
     price_cents: int = Field(ge=0)
     tags: list[str] = Field(default_factory=list)
     is_active: bool = True
+    learning_outcomes: list[str] = Field(default_factory=list)
+    duration_minutes: Optional[int] = Field(default=None, ge=0)
+    module_count: Optional[int] = Field(default=None, ge=0)
 
 
 class EventIn(BaseModel):
@@ -70,7 +73,9 @@ class SignalFeedItem(BaseModel):
 
     label: str
     detail: str
+    icon: str = "dot"
     is_latest: bool
+    occurred_at: str = ""
 
 
 class SignalRecommendationItem(BaseModel):
@@ -84,6 +89,13 @@ class SignalRecommendationItem(BaseModel):
 class SignalRecommendation(BaseModel):
     narrative: str
     items: list[SignalRecommendationItem]
+    trigger_reason: Optional[str] = None
+    refreshed_at: Optional[str] = None
+
+
+class InterestWeight(BaseModel):
+    label: str
+    pct: int
 
 
 class LiveSignalResponse(BaseModel):
@@ -92,3 +104,6 @@ class LiveSignalResponse(BaseModel):
 
     feed: list[SignalFeedItem]
     recommendation: Optional[SignalRecommendation] = None
+    events_since_gen: int = 0
+    trigger_threshold: int = 3
+    top_interests: list[InterestWeight] = Field(default_factory=list)

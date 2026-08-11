@@ -55,8 +55,12 @@ async def create_product(
     price_cents: int = Form(...),
     tags: str = Form(""),
     is_active: Optional[str] = Form(None),
+    learning_outcomes: str = Form(""),
+    duration_minutes: Optional[int] = Form(None),
+    module_count: Optional[int] = Form(None),
 ):
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    outcome_list = [line.strip() for line in learning_outcomes.splitlines() if line.strip()]
     async with transaction() as conn:
         product = await catalog.upsert_product(
             product_id=None,
@@ -67,6 +71,9 @@ async def create_product(
             price_cents=price_cents,
             tags=tag_list,
             is_active=is_active is not None,
+            learning_outcomes=outcome_list,
+            duration_minutes=duration_minutes,
+            module_count=module_count,
             conn=conn,
         )
         await outbox.enqueue(product["id"], op="upsert", conn=conn)
@@ -98,8 +105,12 @@ async def update_product(
     price_cents: int = Form(...),
     tags: str = Form(""),
     is_active: Optional[str] = Form(None),
+    learning_outcomes: str = Form(""),
+    duration_minutes: Optional[int] = Form(None),
+    module_count: Optional[int] = Form(None),
 ):
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    outcome_list = [line.strip() for line in learning_outcomes.splitlines() if line.strip()]
     async with transaction() as conn:
         product = await catalog.upsert_product(
             product_id=product_id,
@@ -110,6 +121,9 @@ async def update_product(
             price_cents=price_cents,
             tags=tag_list,
             is_active=is_active is not None,
+            learning_outcomes=outcome_list,
+            duration_minutes=duration_minutes,
+            module_count=module_count,
             conn=conn,
         )
         await outbox.enqueue(product["id"], op="upsert", conn=conn)

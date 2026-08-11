@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
@@ -15,6 +16,7 @@ from smartreco_agent.src.auth.dependencies import (
 )
 from smartreco_agent.src.db import catalog
 from smartreco_agent.src.tracking.gate import should_generate
+from smartreco_agent.src.tracking.signal_feed import relative_time, trigger_reason_label
 from smartreco_agent.src.web.templating import templates
 
 router = APIRouter()
@@ -73,7 +75,15 @@ async def recommendations_page(
     request: Request, user: CurrentUser = Depends(require_user)
 ):
     rec = await catalog.get_current_recommendation(user.id)
-    return templates.TemplateResponse(request, "recommendations.html", {"rec": rec})
+    refreshed_at = (
+        relative_time(rec["created_at"], datetime.now(timezone.utc)) if rec else None
+    )
+    trigger_label = trigger_reason_label(rec.get("trigger_reason")) if rec else None
+    return templates.TemplateResponse(
+        request,
+        "recommendations.html",
+        {"rec": rec, "refreshed_at": refreshed_at, "trigger_label": trigger_label},
+    )
 
 
 @router.post("/recommendations/refresh")

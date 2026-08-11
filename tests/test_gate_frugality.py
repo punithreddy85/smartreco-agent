@@ -28,7 +28,7 @@ def _production_trigger_policy(monkeypatch):
     tests assert against the documented production policy (ARCHITECTURE.md §8)
     and must stay correct regardless of whatever a developer's local .env says."""
     monkeypatch.setattr(gate, "COOLDOWN", timedelta(minutes=10))
-    monkeypatch.setattr(gate, "COUNT_THRESHOLD", 8)
+    monkeypatch.setattr(gate, "COUNT_THRESHOLD", 3)
     monkeypatch.setattr(gate, "DRIFT_THRESHOLD", 0.15)
 
 

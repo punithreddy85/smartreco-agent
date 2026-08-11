@@ -171,14 +171,22 @@
   // --- Dwell time: accumulated via the Page Visibility API, flushed on hide ---
 
   var dwellStart = document.visibilityState === "visible" ? Date.now() : null;
-  var currentProductId = window.SMARTRECO_CURRENT_PRODUCT_ID || null;
 
   function flushDwell() {
     if (dwellStart == null) return;
     var seconds = Math.round((Date.now() - dwellStart) / 1000);
-    dwellStart = null;
+    dwellStart = null; // clear before the transport call so a second
+    // visibilitychange/pagehide firing for the same navigation is a no-op
     if (seconds < 2) return; // ignore drive-by loads
-    push(makeEvent("dwell", currentProductId, { seconds: seconds, path: location.pathname }));
+    // Read the product id lazily, at flush time: tracker.js loads before
+    // product.html's inline script sets this global, so capturing it once
+    // at parse time always sees `null` on product pages.
+    push(
+      makeEvent("dwell", window.SMARTRECO_CURRENT_PRODUCT_ID || null, {
+        seconds: seconds,
+        path: location.pathname,
+      })
+    );
   }
 
   document.addEventListener("visibilitychange", function () {

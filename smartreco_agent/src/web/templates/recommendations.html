@@ -9,16 +9,18 @@
 
   {% if rec %}
     <section class="narrative-card">
+      {% if refreshed_at %}
+        <p class="muted small rec-meta">refreshed {{ refreshed_at }} ago &middot; {{ trigger_label }}</p>
+      {% endif %}
       <p>{{ rec.narrative }}</p>
-      <p class="muted small">Generated because: {{ rec.trigger_reason }}</p>
     </section>
 
     <div class="card-grid">
       {% for item in rec['items'] %}
         <a class="card product-card" href="/products/{{ item.product_id }}">
-          <div class="card-badge">{{ item.level }}</div>
+          <div class="card-badge" data-level="{{ item.level }}">{{ item.level }}</div>
           <h3>{{ item.title }}</h3>
-          <p class="muted">{{ item.category }}</p>
+          <p class="card-category">{{ item.category }}</p>
           <p class="reason">{{ item.reason }}</p>
           <div class="price">${{ "%.2f"|format(item.price_cents / 100) }}</div>
         </a>

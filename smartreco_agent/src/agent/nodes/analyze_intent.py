@@ -26,7 +26,12 @@ async def analyze_intent(state: AgentState) -> AgentState:
         system=system,
         user=user,
         schema=IntentAnalysis,
-        max_tokens=400,
+        # 400 was too tight for this model in practice: `catalog.agent_runs`
+        # showed it truncating (finish_reason=length) on nearly every call,
+        # paying for a second full round trip via `complete_json`'s
+        # double-and-retry every single time (900 covers the observed
+        # successful completion size with headroom).
+        max_tokens=900,
     )
 
     prompt_tokens, completion_tokens = add_tokens(

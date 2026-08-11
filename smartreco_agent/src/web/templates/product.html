@@ -5,14 +5,32 @@
 
   <div class="product-layout">
     <article class="product-detail" data-product-id="{{ product.id }}">
-      <div class="card-badge">{{ product.level }}</div>
+      <div class="card-badge" data-level="{{ product.level }}">{{ product.level }}</div>
       <h1>{{ product.title }}</h1>
       <p class="muted">{{ product.category }} &middot; {{ product.tags | join(', ') }}</p>
       <p class="price large">${{ "%.2f"|format(product.price_cents / 100) }}</p>
+      {% if product.duration_minutes or product.module_count %}
+        <p class="muted small course-meta">
+          {% if product.module_count %}{{ product.module_count }} modules{% endif %}
+          {% if product.duration_minutes and product.module_count %}&middot;{% endif %}
+          {% if product.duration_minutes %}~{{ (product.duration_minutes / 60) | round(1) }}h{% endif %}
+        </p>
+      {% endif %}
       <p class="description">{{ product.description }}</p>
       <button id="add-to-cart" class="primary" {% if already_added %}disabled{% endif %}>
         {% if already_added %}Added ✓{% else %}Add to cart{% endif %}
       </button>
+
+      {% if product.learning_outcomes %}
+        <section class="learning-outcomes">
+          <h2>What you'll learn</h2>
+          <ul>
+            {% for outcome in product.learning_outcomes %}
+              <li>{{ outcome }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
     </article>
 
     <aside class="live-signal-panel">
@@ -21,7 +39,14 @@
         <div>
           <strong>Your Signal</strong>
           <p class="muted small">live &middot; observed by agent</p>
+          <p id="signal-interests" class="muted small interests-line"></p>
         </div>
+      </div>
+      <div class="signal-strength">
+        <div class="signal-strength-track">
+          <div id="signal-strength-fill" class="signal-strength-fill" style="width: 0%"></div>
+        </div>
+        <p id="signal-strength-label" class="muted small signal-strength-label">0 / 3 to next refresh</p>
       </div>
       <div id="signal-feed" class="signal-feed">
         <p class="muted small">Loading your recent activity…</p>

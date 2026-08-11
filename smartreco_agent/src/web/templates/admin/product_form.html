@@ -17,6 +17,11 @@
     </label>
     <label>Price (cents) <input type="number" name="price_cents" min="0" required value="{{ product.price_cents if product else 0 }}"></label>
     <label>Tags (comma-separated) <input type="text" name="tags" value="{{ product.tags | join(', ') if product else '' }}"></label>
+    <label>What you'll learn (one bullet per line)
+      <textarea name="learning_outcomes" rows="4">{{ product.learning_outcomes | join('\n') if product else '' }}</textarea>
+    </label>
+    <label>Duration (minutes) <input type="number" name="duration_minutes" min="0" value="{{ product.duration_minutes if product and product.duration_minutes is not none else '' }}"></label>
+    <label>Module count <input type="number" name="module_count" min="0" value="{{ product.module_count if product and product.module_count is not none else '' }}"></label>
     <label class="checkbox"><input type="checkbox" name="is_active" {% if not product or product.is_active %}checked{% endif %}> Active</label>
     <button type="submit" class="primary">{{ 'Save changes' if product else 'Create product' }}</button>
   </form>

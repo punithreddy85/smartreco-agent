@@ -36,7 +36,14 @@ async def _call(
         system=system,
         user=user,
         schema=Recommendation,
-        max_tokens=1200,
+        # `catalog.agent_runs` showed this call truncating (finish_reason=
+        # length) on nearly every run - real successful completions ran well
+        # past 1200 tokens, so every run was silently paying for a second,
+        # full LLM round trip (`complete_json`'s double-and-retry), and
+        # occasionally still failing after that. 2200 covers the observed
+        # range with headroom without materially changing narrative length,
+        # which the prompt already caps at 2-4 sentences.
+        max_tokens=2200,
     )
     return rec, (usage.prompt_tokens, usage.completion_tokens)
 

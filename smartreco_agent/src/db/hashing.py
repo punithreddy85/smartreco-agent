@@ -19,10 +19,17 @@ from typing import Mapping, Sequence
 
 
 def content_hash(
-    *, title: str, description: str, category: str, level: str, tags: Sequence[str]
+    *,
+    title: str,
+    description: str,
+    category: str,
+    level: str,
+    tags: Sequence[str],
+    learning_outcomes: Sequence[str] = (),
 ) -> str:
     """Sha256 over the embeddable fields of a product."""
     normalized_tags = "|".join(sorted(tags))
+    normalized_outcomes = "|".join(o.strip() for o in learning_outcomes)
     payload = "||".join(
         [
             title.strip(),
@@ -30,17 +37,28 @@ def content_hash(
             category.strip(),
             level.strip(),
             normalized_tags,
+            normalized_outcomes,
         ]
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def embeddable_text(
-    *, title: str, description: str, category: str, level: str, tags: Sequence[str]
+    *,
+    title: str,
+    description: str,
+    category: str,
+    level: str,
+    tags: Sequence[str],
+    learning_outcomes: Sequence[str] = (),
 ) -> str:
     """The text that is actually sent to the embedding model for a product."""
     tag_text = ", ".join(tags)
-    return f"{title}\n\nCategory: {category} | Level: {level} | Tags: {tag_text}\n\n{description}"
+    outcomes_text = " ".join(learning_outcomes)
+    header = f"{title}\n\nCategory: {category} | Level: {level} | Tags: {tag_text}"
+    if outcomes_text:
+        header += f"\n\nWhat you'll learn: {outcomes_text}"
+    return f"{header}\n\n{description}"
 
 
 def profile_hash(

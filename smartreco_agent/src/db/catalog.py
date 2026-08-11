@@ -129,11 +129,19 @@ async def upsert_product(
     price_cents: int,
     tags: Sequence[str],
     is_active: bool = True,
+    learning_outcomes: Sequence[str] = (),
+    duration_minutes: Optional[int] = None,
+    module_count: Optional[int] = None,
     conn=None,
 ) -> dict[str, Any]:
     """Insert or update a product. `content_hash` is computed here, never trusted from a caller."""
     hash_value = content_hash(
-        title=title, description=description, category=category, level=level, tags=tags
+        title=title,
+        description=description,
+        category=category,
+        level=level,
+        tags=tags,
+        learning_outcomes=learning_outcomes,
     )
     async with AsyncExitStack() as stack:
         c = await _conn_or_borrow(stack, conn)
@@ -142,8 +150,9 @@ async def upsert_product(
                 await cur.execute(
                     """
                     insert into catalog.products
-                        (title, description, category, level, price_cents, tags, is_active, content_hash)
-                    values (%s, %s, %s, %s, %s, %s, %s, %s)
+                        (title, description, category, level, price_cents, tags, is_active,
+                         content_hash, learning_outcomes, duration_minutes, module_count)
+                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     returning *
                     """,
                     (
@@ -155,6 +164,9 @@ async def upsert_product(
                         list(tags),
                         is_active,
                         hash_value,
+                        list(learning_outcomes),
+                        duration_minutes,
+                        module_count,
                     ),
                 )
             else:
@@ -163,6 +175,7 @@ async def upsert_product(
                     update catalog.products
                        set title = %s, description = %s, category = %s, level = %s,
                            price_cents = %s, tags = %s, is_active = %s, content_hash = %s,
+                           learning_outcomes = %s, duration_minutes = %s, module_count = %s,
                            updated_at = now()
                      where id = %s
                     returning *
@@ -176,6 +189,9 @@ async def upsert_product(
                         list(tags),
                         is_active,
                         hash_value,
+                        list(learning_outcomes),
+                        duration_minutes,
+                        module_count,
                         str(product_id),
                     ),
                 )
@@ -488,6 +504,25 @@ async def mark_generated(
 # --------------------------------------------------------------------------- #
 # Recommendations
 # --------------------------------------------------------------------------- #
+
+
+async def current_recommendation_product_ids(
+    user_id: UUID | str, conn=None
+) -> set[str]:
+    async with AsyncExitStack() as stack:
+        c = await _conn_or_borrow(stack, conn)
+        async with c.cursor() as cur:
+            await cur.execute(
+                """
+                select ri.product_id
+                  from catalog.recommendation_items ri
+                  join catalog.recommendations r on r.id = ri.rec_id
+                 where r.user_id = %s and r.is_current
+                """,
+                (str(user_id),),
+            )
+            rows = await cur.fetchall()
+            return {str(r["product_id"]) for r in rows}
 
 
 async def get_current_recommendation(

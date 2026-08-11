@@ -21,10 +21,10 @@
   <div class="card-grid">
     {% for p in products %}
       <a class="card product-card" href="/products/{{ p.id }}" data-product-id="{{ p.id }}" data-category="{{ p.category }}">
-        <div class="card-badge">{{ p.level }}</div>
+        <div class="card-badge" data-level="{{ p.level }}">{{ p.level }}</div>
         <h3>{{ p.title }}</h3>
-        <p class="muted">{{ p.category }}</p>
-        <p>{{ p.description[:140] }}{% if p.description|length > 140 %}…{% endif %}</p>
+        <p class="card-category">{{ p.category }}</p>
+        <p class="card-description">{{ p.description[:140] }}{% if p.description|length > 140 %}…{% endif %}</p>
         <div class="price">${{ "%.2f"|format(p.price_cents / 100) }}</div>
       </a>
     {% endfor %}

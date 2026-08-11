@@ -65,11 +65,15 @@ class Settings(BaseSettings):
         json_schema_extra={"env": "MESH_BASE_URL"},
     )
     MESH_CHAT_MODEL: str = Field(
-        default="google/gemini-3-flash-preview",
+        default="google/gemini-2.5-flash-lite",
         json_schema_extra={"env": "MESH_CHAT_MODEL"},
+        description="Narrative generation is short, heavily schema-constrained copy over "
+        "a handful of provided candidates - not a task that needs a frontier model. "
+        "flash-lite matched gemini-3-flash-preview's output quality on real prompts at "
+        "~5x lower latency and ~7.5x lower completion cost (no hidden 'thinking' tokens).",
     )
     MESH_CHEAP_MODEL: str = Field(
-        default="google/gemini-3-flash-preview",
+        default="google/gemini-2.5-flash-lite",
         json_schema_extra={"env": "MESH_CHEAP_MODEL"},
     )
     MESH_EMBED_MODEL: str = Field(
@@ -131,7 +135,12 @@ class Settings(BaseSettings):
         "this in local/demo .env files for faster feedback loops.",
     )
     TRIGGER_COUNT_THRESHOLD: int = Field(
-        default=8, json_schema_extra={"env": "TRIGGER_COUNT_THRESHOLD"}
+        default=3,
+        json_schema_extra={"env": "TRIGGER_COUNT_THRESHOLD"},
+        description="Volume-based backstop: fires a 'count' trigger after this many "
+        "countable events even if interests never drift/shift enough to trigger on "
+        "their own (e.g. a user who stays in one category but keeps exhausting the "
+        "candidate pool). Lower = fresher picks, more frequent (costlier) agent runs.",
     )
     TRIGGER_DRIFT_THRESHOLD: float = Field(
         default=0.15, json_schema_extra={"env": "TRIGGER_DRIFT_THRESHOLD"}

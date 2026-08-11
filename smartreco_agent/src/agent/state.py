@@ -15,6 +15,7 @@ class AgentState(TypedDict, total=False):
     profile: dict[str, Any]
     recent_events: list[dict[str, Any]]
     recent_search_queries: list[str]
+    current_product_id: Optional[str]
     excluded_product_ids: set[str]
 
     intent: Optional[IntentAnalysis]

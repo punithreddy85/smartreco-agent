@@ -27,6 +27,7 @@ async def embed_products(products: Sequence[dict]) -> list[EmbeddedProduct]:
             category=p["category"],
             level=p["level"],
             tags=p["tags"],
+            learning_outcomes=p.get("learning_outcomes") or [],
         )
         for p in products
     ]
@@ -42,6 +43,7 @@ async def embed_products(products: Sequence[dict]) -> list[EmbeddedProduct]:
                 category=p["category"],
                 level=p["level"],
                 tags=p["tags"],
+                learning_outcomes=p.get("learning_outcomes") or [],
             ),
             model=settings.MESH_EMBED_MODEL,
             category=p["category"],

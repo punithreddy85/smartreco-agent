@@ -30,7 +30,10 @@ async def refine(state: AgentState) -> AgentState:
         system=system,
         user=user,
         schema=RefinedQueries,
-        max_tokens=300,
+        # See analyze_intent.py: this model needs meaningfully more budget
+        # than the schema's visible fields suggest, or it truncates and pays
+        # for a full retry round trip on almost every call.
+        max_tokens=600,
     )
 
     prompt_tokens, completion_tokens = add_tokens(
